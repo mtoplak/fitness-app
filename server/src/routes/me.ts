@@ -8,7 +8,10 @@ router.get("/me", authenticateJwt, (req: AuthRequest, res) => {
   return res.json({
     id: user._id,
     email: user.email,
+    firstName: user.firstName,
+    lastName: user.lastName,
     fullName: user.fullName,
+    address: user.address,
     role: user.role
   });
 });

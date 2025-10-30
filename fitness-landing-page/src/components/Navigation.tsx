@@ -1,9 +1,12 @@
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 import { Menu } from "lucide-react";
 import { useState } from "react";
+import { useAuth } from "../context/AuthContext";
 
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { user, logout } = useAuth();
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
@@ -30,8 +33,17 @@ const Navigation = () => {
           </div>
           
           <div className="hidden md:flex items-center space-x-4">
-            <Button variant="ghost">Prijava</Button>
-            <Button>Registracija</Button>
+            {user ? (
+              <>
+                <Link to="/dashboard"><Button variant="ghost">{user.fullName}</Button></Link>
+                <Button variant="outline" onClick={logout}>Odjava</Button>
+              </>
+            ) : (
+              <>
+                <Link to="/login"><Button variant="ghost">Prijava</Button></Link>
+                <Link to="/register"><Button>Registracija</Button></Link>
+              </>
+            )}
           </div>
 
           <button 
@@ -57,8 +69,17 @@ const Navigation = () => {
               Moj profil
             </a>
             <div className="flex flex-col space-y-2 pt-2">
-              <Button variant="ghost" className="w-full">Prijava</Button>
-              <Button className="w-full">Registracija</Button>
+              {user ? (
+                <>
+                  <Link to="/dashboard"><Button variant="ghost" className="w-full">{user.fullName}</Button></Link>
+                  <Button variant="outline" className="w-full" onClick={() => { setIsMenuOpen(false); logout(); }}>Odjava</Button>
+                </>
+              ) : (
+                <>
+                  <Link to="/login"><Button variant="ghost" className="w-full">Prijava</Button></Link>
+                  <Link to="/register"><Button className="w-full">Registracija</Button></Link>
+                </>
+              )}
             </div>
           </div>
         )}

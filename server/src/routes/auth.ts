@@ -8,14 +8,16 @@ const router = Router();
 
 router.post("/register", async (req, res) => {
   try {
-    const { email, password, fullName, role } = req.body as {
+    const { email, password, firstName, lastName, address, role } = req.body as {
       email: string;
       password: string;
-      fullName: string;
+      firstName: string;
+      lastName: string;
+      address?: string;
       role?: UserRole;
     };
 
-    if (!email || !password || !fullName) {
+    if (!email || !password || !firstName || !lastName) {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
@@ -23,11 +25,12 @@ router.post("/register", async (req, res) => {
     if (existing) return res.status(409).json({ message: "Email already in use" });
 
     const passwordHash = await bcrypt.hash(password, 10);
-    const user = await User.create({ email, fullName, passwordHash, role: role || "member" });
+    const fullName = `${firstName} ${lastName}`.trim();
+    const user = await User.create({ email, firstName, lastName, address, fullName, passwordHash, role: role || "member" });
     const token = jwt.sign({ userId: user._id }, env.jwtSecret, { expiresIn: "7d" });
     return res.status(201).json({
       token,
-      user: { id: user._id, email: user.email, fullName: user.fullName, role: user.role }
+      user: { id: user._id, email: user.email, firstName: user.firstName, lastName: user.lastName, fullName: user.fullName, address: user.address, role: user.role }
     });
   } catch (err) {
     return res.status(500).json({ message: "Server error" });
@@ -48,7 +51,7 @@ router.post("/login", async (req, res) => {
     const token = jwt.sign({ userId: user._id }, env.jwtSecret, { expiresIn: "7d" });
     return res.json({
       token,
-      user: { id: user._id, email: user.email, fullName: user.fullName, role: user.role }
+      user: { id: user._id, email: user.email, firstName: user.firstName, lastName: user.lastName, fullName: user.fullName, address: user.address, role: user.role }
     });
   } catch (err) {
     return res.status(500).json({ message: "Server error" });
