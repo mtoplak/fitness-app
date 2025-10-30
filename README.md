@@ -33,8 +33,8 @@ Endpoints:
 - POST `/auth/login` { email, password }
 - GET `/user/me` (Authorization: Bearer <token>)
 
-### Frontend (fitness-landing-page)
-1) Create `.env` in `fitness-landing-page` with:
+### Frontend (frontend)
+1) Create `.env` in `frontend` with:
 
 ```bash
 VITE_API_BASE_URL=http://localhost:4000
@@ -43,7 +43,7 @@ VITE_API_BASE_URL=http://localhost:4000
 2) Install and run:
 
 ```bash
-cd fitness-landing-page
+cd frontend
 npm install
 npm run dev
 ```

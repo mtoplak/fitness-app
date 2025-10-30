@@ -13,6 +13,7 @@ import { AuthProvider } from "./context/AuthContext";
 import AuthTest from "./pages/AuthTest";
 import SiteLayout from "./layouts/SiteLayout";
 import RegisterTrainer from "./pages/RegisterTrainer";
+import ProteinCalculator from "./pages/ProteinCalculator";
 
 const queryClient = new QueryClient();
 
@@ -61,6 +62,14 @@ const App = () => (
               element={
                 <SiteLayout>
                   <AuthTest />
+                </SiteLayout>
+              }
+            />
+            <Route
+              path="/protein-calculator"
+              element={
+                <SiteLayout>
+                  <ProteinCalculator />
                 </SiteLayout>
               }
             />

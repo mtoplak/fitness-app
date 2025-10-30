@@ -22,7 +22,7 @@ export default function Register() {
     try {
       await register({ firstName, lastName, address, email, password, role: "member" });
       navigate("/dashboard", { replace: true });
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError(err.message || "Napaka pri registraciji");
     } finally {
       setLoading(false);

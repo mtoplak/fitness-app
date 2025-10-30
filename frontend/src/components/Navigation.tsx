@@ -23,12 +23,9 @@ const Navigation = () => {
               <a href="#urnik" className="text-foreground/80 hover:text-primary transition-colors">
                 Urnik
               </a>
-              <a href="#kalkulator" className="text-foreground/80 hover:text-primary transition-colors">
-                Prostorski kalkulator
-              </a>
-              <a href="#profil" className="text-foreground/80 hover:text-primary transition-colors">
-                Moj profil
-              </a>
+              <Link to="/protein-calculator" className="text-foreground/80 hover:text-primary transition-colors">
+                Beljakovinski kalkulator
+              </Link>
             </div>
           </div>
           
@@ -62,12 +59,9 @@ const Navigation = () => {
             <a href="#urnik" className="block py-2 text-foreground/80 hover:text-primary">
               Urnik
             </a>
-            <a href="#kalkulator" className="block py-2 text-foreground/80 hover:text-primary">
-              Prostorski kalkulator
-            </a>
-            <a href="#profil" className="block py-2 text-foreground/80 hover:text-primary">
-              Moj profil
-            </a>
+            <Link to="/protein-calculator" className="block py-2 text-foreground/80 hover:text-primary">
+              Beljakovinski kalkulator
+            </Link>
             <div className="flex flex-col space-y-2 pt-2">
               {user ? (
                 <>
