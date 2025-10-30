@@ -5,6 +5,7 @@ import { env } from "./config/env.js";
 import { connectToDatabase } from "./db.js";
 import authRoutes from "./routes/auth.js";
 import meRoutes from "./routes/me.js";
+import classesRoutes from "./routes/classes.js";
 
 async function bootstrap() {
   await connectToDatabase();
@@ -19,6 +20,7 @@ async function bootstrap() {
   app.get("/health", (_req, res) => res.json({ ok: true }));
   app.use("/auth", authRoutes);
   app.use("/user", meRoutes);
+  app.use("/classes", classesRoutes);
 
   app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
     // Fallback error handler

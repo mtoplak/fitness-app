@@ -17,12 +17,12 @@ const Navigation = () => {
               WiiFit
             </a>
             <div className="hidden md:flex space-x-6">
-              <a href="#ponudba" className="text-foreground/80 hover:text-primary transition-colors">
+              <Link to="/#ponudba" className="text-foreground/80 hover:text-primary transition-colors">
                 Ponudba
-              </a>
-              <a href="#urnik" className="text-foreground/80 hover:text-primary transition-colors">
+              </Link>
+              <Link to="/urnik" className="text-foreground/80 hover:text-primary transition-colors">
                 Urnik
-              </a>
+              </Link>
               <Link to="/protein-calculator" className="text-foreground/80 hover:text-primary transition-colors">
                 Beljakovinski kalkulator
               </Link>
@@ -53,12 +53,12 @@ const Navigation = () => {
 
         {isMenuOpen && (
           <div className="md:hidden py-4 space-y-2">
-            <a href="#ponudba" className="block py-2 text-foreground/80 hover:text-primary">
+            <Link to="/#ponudba" className="block py-2 text-foreground/80 hover:text-primary">
               Ponudba
-            </a>
-            <a href="#urnik" className="block py-2 text-foreground/80 hover:text-primary">
+            </Link>
+            <Link to="/urnik" className="block py-2 text-foreground/80 hover:text-primary">
               Urnik
-            </a>
+            </Link>
             <Link to="/protein-calculator" className="block py-2 text-foreground/80 hover:text-primary">
               Beljakovinski kalkulator
             </Link>

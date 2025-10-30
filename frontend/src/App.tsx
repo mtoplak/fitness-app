@@ -14,6 +14,7 @@ import AuthTest from "./pages/AuthTest";
 import SiteLayout from "./layouts/SiteLayout";
 import RegisterTrainer from "./pages/RegisterTrainer";
 import ProteinCalculator from "./pages/ProteinCalculator";
+import Schedule from "./pages/Schedule";
 
 const queryClient = new QueryClient();
 
@@ -62,6 +63,14 @@ const App = () => (
               element={
                 <SiteLayout>
                   <AuthTest />
+                </SiteLayout>
+              }
+            />
+            <Route
+              path="/urnik"
+              element={
+                <SiteLayout>
+                  <Schedule />
                 </SiteLayout>
               }
             />

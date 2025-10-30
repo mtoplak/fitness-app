@@ -8,7 +8,8 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc -p tsconfig.json",
     "start": "node dist/index.js",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "seed:classes": "tsx src/scripts/seedClasses.ts"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
