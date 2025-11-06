@@ -1,6 +1,6 @@
 import mongoose, { Schema, Document, Model, Types } from "mongoose";
 
-export type TrainerType = "personal" | "group";
+export type TrainerType = "personal" | "group" | "both";
 
 export interface TrainerProfileDocument extends Document {
   userId: Types.ObjectId; // references User with role "trainer"
@@ -14,7 +14,7 @@ export interface TrainerProfileDocument extends Document {
 const trainerProfileSchema = new Schema<TrainerProfileDocument>(
   {
     userId: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true, unique: true },
-    trainerType: { type: String, enum: ["personal", "group"], required: true },
+    trainerType: { type: String, enum: ["personal", "group", "both"], required: true },
     hourlyRate: { type: Number, required: true, min: 0 },
     groupClassesLed: [{ type: Schema.Types.ObjectId, ref: "GroupClass" }]
   },

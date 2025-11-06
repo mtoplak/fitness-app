@@ -9,7 +9,7 @@ export interface UserDocument extends Document {
   firstName?: string;
   lastName?: string;
   address?: string;
-  subscriptionId?: Types.ObjectId; // ref Subscription
+  membershipId?: Types.ObjectId; // ref Membership
   role: UserRole;
   createdAt: Date;
   updatedAt: Date;
@@ -23,7 +23,7 @@ const userSchema = new Schema<UserDocument>(
     firstName: { type: String },
     lastName: { type: String },
     address: { type: String },
-    subscriptionId: { type: Schema.Types.ObjectId, ref: "Subscription" },
+    membershipId: { type: Schema.Types.ObjectId, ref: "Membership" },
     role: { type: String, enum: ["admin", "trainer", "member"], default: "member", required: true }
   },
   { timestamps: true }

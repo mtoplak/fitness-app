@@ -9,7 +9,10 @@
     "build": "tsc -p tsconfig.json",
     "start": "node dist/index.js",
     "lint": "eslint .",
-    "seed:classes": "tsx src/scripts/seedClasses.ts"
+    "seed:classes": "tsx src/scripts/seedClasses.ts",
+    "seed:users": "tsx src/scripts/seedUsers.ts",
+    "seed:memberships": "tsx src/scripts/seedMemberships.ts",
+    "seed:all": "tsx src/scripts/seedUsers.ts && tsx src/scripts/seedMemberships.ts && tsx src/scripts/seedClasses.ts"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

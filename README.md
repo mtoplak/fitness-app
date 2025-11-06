@@ -6,7 +6,7 @@
 
 ### Repository Structure
 - `server`: Express + MongoDB (Mongoose) + JWT auth
-- `fitness-landing-page`: React (Vite) frontend
+- `frontend`: React (Vite) frontend
 
 ### Backend (server)
 1) Create `.env` in `server` with:
