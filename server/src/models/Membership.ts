@@ -12,6 +12,10 @@ export interface MembershipDocument extends Document {
   packageId: Types.ObjectId; // ref MembershipPackage
   startDate: Date;
   endDate: Date;
+  autoRenew: boolean; // samodejno podaljševanje
+  status: "active" | "cancelled" | "expired"; // status naročnine
+  nextPackageId?: Types.ObjectId; // paket, ki bo začel veljati po koncu trenutnega
+  cancelledAt?: Date; // datum preklica
   createdAt: Date;
   updatedAt: Date;
 }
@@ -29,7 +33,11 @@ const membershipSchema = new Schema<MembershipDocument>(
     userId: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
     packageId: { type: Schema.Types.ObjectId, ref: "MembershipPackage", required: true },
     startDate: { type: Date, required: true },
-    endDate: { type: Date, required: true }
+    endDate: { type: Date, required: true },
+    autoRenew: { type: Boolean, default: true },
+    status: { type: String, enum: ["active", "cancelled", "expired"], default: "active" },
+    nextPackageId: { type: Schema.Types.ObjectId, ref: "MembershipPackage" },
+    cancelledAt: { type: Date }
   },
   { timestamps: true }
 );

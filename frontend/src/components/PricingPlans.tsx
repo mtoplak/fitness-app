@@ -1,6 +1,11 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Check } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
+import { useState, useEffect } from "react";
+import { api } from "@/lib/api";
+import { useToast } from "@/hooks/use-toast";
 
 const plans = [
   {
@@ -40,6 +45,51 @@ const plans = [
 ];
 
 const PricingPlans = () => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [packages, setPackages] = useState<Array<{ _id: string; name: string; price: number }>>([]);
+
+  useEffect(() => {
+    const loadPackages = async () => {
+      try {
+        const data = await api.getMembershipPackages();
+        setPackages(data.packages);
+      } catch (error) {
+        console.error("Napaka pri nalaganju paketov:", error);
+      }
+    };
+    void loadPackages();
+  }, []);
+
+  const handleSelectPlan = (packageId: string, packageName: string) => {
+    // Če uporabnik ni prijavljen, preusmeri na registracijo
+    if (!user) {
+      toast({
+        title: "Prijava potrebna",
+        description: "Za izbiro paketa se morate najprej prijaviti ali registrirati",
+      });
+      // Shrani izbrani paket v localStorage za pozneje
+      localStorage.setItem("selectedPackage", packageId);
+      navigate("/register");
+      return;
+    }
+
+    // Če uporabnik ni član, ne more kupiti paketa
+    if (user.role !== "member") {
+      toast({
+        title: "Samo za člane",
+        description: "Samo člani lahko kupijo paket naročnine",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Preusmeri na stran za upravljanje naročnine
+    localStorage.setItem("selectedPackage", packageId);
+    navigate("/membership");
+  };
+
   return (
     <section id="ponudba" className="py-24 bg-muted/30">
       <div className="container mx-auto px-4">
@@ -51,46 +101,53 @@ const PricingPlans = () => {
         </div>
 
         <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-          {plans.map((plan, index) => (
-            <Card
-              key={index}
-              className={`p-8 relative hover:shadow-xl transition-all duration-300 ${
-                plan.popular
-                  ? "border-primary border-2 scale-105"
-                  : "hover:scale-105"
-              }`}
-            >
-              {plan.popular && (
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground px-4 py-1 rounded-full text-sm font-semibold">
-                  Najbolj priljubljen
-                </div>
-              )}
-              
-              <div className="text-center mb-6">
-                <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
-                <div className="flex items-baseline justify-center">
-                  <span className="text-5xl font-bold">{plan.price}€</span>
-                  <span className="text-muted-foreground ml-2">/mesec</span>
-                </div>
-              </div>
-
-              <ul className="space-y-4 mb-8">
-                {plan.features.map((feature, i) => (
-                  <li key={i} className="flex items-start">
-                    <Check className="h-5 w-5 text-primary mr-3 mt-0.5 flex-shrink-0" />
-                    <span className="text-foreground/80">{feature}</span>
-                  </li>
-                ))}
-              </ul>
-
-              <Button 
-                className="w-full" 
-                variant={plan.popular ? "default" : "outline"}
+          {plans.map((plan, index) => {
+            // Najdi paket iz API-ja, ki ustreza imenu
+            const apiPackage = packages.find(p => p.name === plan.name);
+            
+            return (
+              <Card
+                key={index}
+                className={`p-8 relative hover:shadow-xl transition-all duration-300 ${
+                  plan.popular
+                    ? "border-primary border-2 scale-105"
+                    : "hover:scale-105"
+                }`}
               >
-                Izberi {plan.name}
-              </Button>
-            </Card>
-          ))}
+                {plan.popular && (
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground px-4 py-1 rounded-full text-sm font-semibold">
+                    Najbolj priljubljen
+                  </div>
+                )}
+                
+                <div className="text-center mb-6">
+                  <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
+                  <div className="flex items-baseline justify-center">
+                    <span className="text-5xl font-bold">{plan.price}€</span>
+                    <span className="text-muted-foreground ml-2">/mesec</span>
+                  </div>
+                </div>
+
+                <ul className="space-y-4 mb-8">
+                  {plan.features.map((feature, i) => (
+                    <li key={i} className="flex items-start">
+                      <Check className="h-5 w-5 text-primary mr-3 mt-0.5 flex-shrink-0" />
+                      <span className="text-foreground/80">{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                <Button 
+                  className="w-full" 
+                  variant={plan.popular ? "default" : "outline"}
+                  onClick={() => apiPackage && handleSelectPlan(apiPackage._id, apiPackage.name)}
+                  disabled={!apiPackage}
+                >
+                  Izberi {plan.name}
+                </Button>
+              </Card>
+            );
+          })}
         </div>
       </div>
     </section>

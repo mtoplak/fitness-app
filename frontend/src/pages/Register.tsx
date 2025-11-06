@@ -21,7 +21,15 @@ export default function Register() {
     setLoading(true);
     try {
       await register({ firstName, lastName, address, email, password, role: "member" });
-      navigate("/profile", { replace: true });
+      
+      // Preveri, če je bil shranjen selectedPackage iz homepage
+      const savedPackageId = localStorage.getItem("selectedPackage");
+      if (savedPackageId) {
+        // Preusmeri na membership stran, kjer bo samodejno odprt dialog za izbiro paketa
+        navigate("/membership", { replace: true });
+      } else {
+        navigate("/profile", { replace: true });
+      }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Napaka pri registraciji");
     } finally {

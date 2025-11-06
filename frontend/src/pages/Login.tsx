@@ -18,7 +18,15 @@ export default function Login() {
     setLoading(true);
     try {
       await login(email, password);
-      navigate("/profile", { replace: true });
+      
+      // Preveri, če je bil shranjen selectedPackage iz homepage
+      const savedPackageId = localStorage.getItem("selectedPackage");
+      if (savedPackageId) {
+        // Preusmeri na membership stran
+        navigate("/membership", { replace: true });
+      } else {
+        navigate("/profile", { replace: true });
+      }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Napaka pri prijavi");
     } finally {

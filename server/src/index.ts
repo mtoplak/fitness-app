@@ -7,6 +7,7 @@ import authRoutes from "./routes/auth.js";
 import meRoutes from "./routes/me.js";
 import classesRoutes from "./routes/classes.js";
 import profileRoutes from "./routes/profile.js";
+import membershipsRoutes from "./routes/memberships.js";
 
 async function bootstrap() {
   await connectToDatabase();
@@ -23,6 +24,7 @@ async function bootstrap() {
   app.use("/user", meRoutes);
   app.use("/classes", classesRoutes);
   app.use("/user", profileRoutes);
+  app.use("/memberships", membershipsRoutes);
 
   app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
     // Fallback error handler

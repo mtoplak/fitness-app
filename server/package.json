@@ -13,7 +13,8 @@
     "seed:users": "tsx src/scripts/seedUsers.ts",
     "seed:memberships": "tsx src/scripts/seedMemberships.ts",
     "seed:bookings": "tsx src/scripts/seedBookings.ts",
-    "seed:all": "tsx src/scripts/seedUsers.ts && tsx src/scripts/seedMemberships.ts && tsx src/scripts/seedClasses.ts && tsx src/scripts/seedBookings.ts"
+    "seed:packages": "tsx src/scripts/seedPackages.ts",
+    "seed:all": "tsx src/scripts/seedUsers.ts && tsx src/scripts/seedMemberships.ts && tsx src/scripts/seedClasses.ts && tsx src/scripts/seedBookings.ts && tsx src/scripts/seedPackages.ts"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

@@ -15,6 +15,7 @@ import RegisterTrainer from "./pages/RegisterTrainer";
 import ProteinCalculator from "./pages/ProteinCalculator";
 import Schedule from "./pages/Schedule";
 import Profile from "./pages/Profile";
+import Membership from "./pages/Membership";
 
 const queryClient = new QueryClient();
 
@@ -88,6 +89,16 @@ const App = () => (
                 <SiteLayout>
                   <ProtectedRoute>
                     <Profile />
+                  </ProtectedRoute>
+                </SiteLayout>
+              }
+            />
+            <Route
+              path="/membership"
+              element={
+                <SiteLayout>
+                  <ProtectedRoute>
+                    <Membership />
                   </ProtectedRoute>
                 </SiteLayout>
               }

@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar, Clock, User, Mail, MapPin, CreditCard, Dumbbell } from "lucide-react";
+import { Link } from "react-router-dom";
 import {
   Dialog,
   DialogContent,
@@ -329,10 +330,21 @@ export default function Profile() {
               ) : (
                 <div className="text-center py-8">
                   <p className="text-muted-foreground mb-4">Nimate aktivne naročnine</p>
-                  <Button>Izberi paket</Button>
+                  <Link to="/membership">
+                    <Button>Izberi paket</Button>
+                  </Link>
                 </div>
               )}
             </CardContent>
+            {profile.membership && (
+              <CardContent className="border-t pt-4">
+                <Link to="/membership">
+                  <Button variant="outline" className="w-full">
+                    Upravljaj naročnino
+                  </Button>
+                </Link>
+              </CardContent>
+            )}
           </Card>
         )}
       </div>

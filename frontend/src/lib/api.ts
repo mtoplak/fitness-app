@@ -169,6 +169,94 @@ export const api = {
   }>(`/classes/${id}/book`, {
     method: "POST",
     body: JSON.stringify({ classDate })
+  }),
+
+  // Membership endpoints
+  getMembershipPackages: () => request<{
+    packages: Array<{
+      _id: string;
+      name: string;
+      price: number;
+    }>;
+  }>("/memberships/packages"),
+
+  getCurrentMembership: () => request<{
+    membership: {
+      id: string;
+      package: {
+        id: string;
+        name: string;
+        price: number;
+      };
+      startDate: string;
+      endDate: string;
+      autoRenew: boolean;
+      status: "active" | "cancelled" | "expired";
+      nextPackage?: {
+        id: string;
+        name: string;
+        price: number;
+      };
+      cancelledAt?: string;
+    } | null;
+  }>("/memberships/current"),
+
+  getMembershipHistory: () => request<{
+    memberships: Array<{
+      id: string;
+      package: {
+        id: string;
+        name: string;
+        price: number;
+      };
+      startDate: string;
+      endDate: string;
+      status: string;
+      autoRenew: boolean;
+      cancelledAt?: string;
+      createdAt: string;
+    }>;
+  }>("/memberships/history"),
+
+  getPayments: () => request<{
+    payments: Array<{
+      id: string;
+      amount: number;
+      status: string;
+      paymentMethod?: string;
+      paymentDate?: string;
+      description: string;
+      createdAt: string;
+    }>;
+  }>("/memberships/payments"),
+
+  subscribeToPlan: (packageId: string) => request<{
+    message: string;
+    membershipId: string;
+  }>("/memberships/subscribe", {
+    method: "POST",
+    body: JSON.stringify({ packageId })
+  }),
+
+  changeMembershipPackage: (packageId: string) => request<{
+    message: string;
+    effectiveDate: string;
+  }>("/memberships/change-package", {
+    method: "POST",
+    body: JSON.stringify({ packageId })
+  }),
+
+  cancelMembership: () => request<{
+    message: string;
+    endDate: string;
+  }>("/memberships/cancel", {
+    method: "POST"
+  }),
+
+  reactivateMembership: () => request<{
+    message: string;
+  }>("/memberships/reactivate", {
+    method: "POST"
   })
 };
 
