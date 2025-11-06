@@ -38,7 +38,83 @@ export const api = {
       method: "POST",
       body: JSON.stringify(data)
     }),
-  me: () => request<{ id: string; email: string; firstName?: string; lastName?: string; fullName: string; address?: string; role: string }>("/user/me")
+  me: () => request<{ id: string; email: string; firstName?: string; lastName?: string; fullName: string; address?: string; role: string }>("/user/me"),
+  
+  // Profile endpoints
+  getProfile: () => request<{
+    user: {
+      id: string;
+      email: string;
+      firstName?: string;
+      lastName?: string;
+      fullName: string;
+      address?: string;
+      role: string;
+    };
+    membership: {
+      package: string;
+      price: number;
+      startDate: string;
+      endDate: string;
+      isActive: boolean;
+    } | null;
+  }>("/user/profile"),
+  
+  getBookings: (params?: { status?: string; upcoming?: boolean }) => {
+    const queryParams = new URLSearchParams();
+    if (params?.status) queryParams.append("status", params.status);
+    if (params?.upcoming) queryParams.append("upcoming", "true");
+    const query = queryParams.toString();
+    return request<{
+      bookings: Array<{
+        id: string;
+        type: "group_class" | "personal_training";
+        status: "confirmed" | "cancelled" | "completed";
+        notes?: string;
+        createdAt: string;
+        className?: string;
+        classDate?: string;
+        schedule?: Array<{ dayOfWeek: number; startTime: string; endTime: string }>;
+        trainer?: {
+          id: string;
+          name: string;
+          firstName?: string;
+          lastName?: string;
+          email: string;
+        };
+        startTime?: string;
+        endTime?: string;
+        duration?: number;
+      }>;
+    }>(`/user/profile/bookings${query ? `?${query}` : ""}`);
+  },
+  
+  getBookingDetails: (id: string) => request<{
+    id: string;
+    type: "group_class" | "personal_training";
+    status: "confirmed" | "cancelled" | "completed";
+    notes?: string;
+    createdAt: string;
+    updatedAt: string;
+    groupClass?: {
+      id: string;
+      name: string;
+      schedule: Array<{ dayOfWeek: number; startTime: string; endTime: string }>;
+      capacity?: number;
+    };
+    classDate?: string;
+    trainer?: {
+      id: string;
+      name: string;
+      firstName?: string;
+      lastName?: string;
+      email: string;
+      address?: string;
+    };
+    startTime?: string;
+    endTime?: string;
+    duration?: number;
+  }>(`/user/profile/bookings/${id}`)
 };
 
 

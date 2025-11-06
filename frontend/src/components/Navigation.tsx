@@ -32,7 +32,7 @@ const Navigation = () => {
           <div className="hidden md:flex items-center space-x-4">
             {user ? (
               <>
-                <Link to="/dashboard"><Button variant="ghost">{user.fullName}</Button></Link>
+                <Link to="/profile"><Button variant="ghost">Profil</Button></Link>
                 <Button variant="outline" onClick={logout}>Odjava</Button>
               </>
             ) : (
@@ -65,7 +65,7 @@ const Navigation = () => {
             <div className="flex flex-col space-y-2 pt-2">
               {user ? (
                 <>
-                  <Link to="/dashboard"><Button variant="ghost" className="w-full">{user.fullName}</Button></Link>
+                  <Link to="/profile"><Button variant="ghost" className="w-full">Profil</Button></Link>
                   <Button variant="outline" className="w-full" onClick={() => { setIsMenuOpen(false); logout(); }}>Odjava</Button>
                 </>
               ) : (

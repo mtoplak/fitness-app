@@ -21,9 +21,9 @@ export default function Register() {
     setLoading(true);
     try {
       await register({ firstName, lastName, address, email, password, role: "member" });
-      navigate("/dashboard", { replace: true });
+      navigate("/profile", { replace: true });
     } catch (err: unknown) {
-      setError(err.message || "Napaka pri registraciji");
+      setError(err instanceof Error ? err.message : "Napaka pri registraciji");
     } finally {
       setLoading(false);
     }

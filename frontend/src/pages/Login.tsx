@@ -18,9 +18,9 @@ export default function Login() {
     setLoading(true);
     try {
       await login(email, password);
-      navigate("/dashboard", { replace: true });
-    } catch (err: any) {
-      setError(err.message || "Napaka pri prijavi");
+      navigate("/profile", { replace: true });
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Napaka pri prijavi");
     } finally {
       setLoading(false);
     }

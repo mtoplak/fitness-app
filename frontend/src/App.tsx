@@ -7,7 +7,6 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-import DashboardRouter from "./pages/DashboardRouter";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import { AuthProvider } from "./context/AuthContext";
 import AuthTest from "./pages/AuthTest";
@@ -15,6 +14,7 @@ import SiteLayout from "./layouts/SiteLayout";
 import RegisterTrainer from "./pages/RegisterTrainer";
 import ProteinCalculator from "./pages/ProteinCalculator";
 import Schedule from "./pages/Schedule";
+import Profile from "./pages/Profile";
 
 const queryClient = new QueryClient();
 
@@ -83,11 +83,11 @@ const App = () => (
               }
             />
             <Route
-              path="/dashboard"
+              path="/profile"
               element={
                 <SiteLayout>
                   <ProtectedRoute>
-                    <DashboardRouter />
+                    <Profile />
                   </ProtectedRoute>
                 </SiteLayout>
               }
