@@ -27,12 +27,12 @@ async function main() {
 
   // Create Trainers (7 total)
   const trainers = [
-    { email: "ana.kovač@wiifit.si", firstName: "Ana", lastName: "Kovač", address: "Fitness ulica 2, Maribor", type: "both" },
+    { email: "ana.kovac@wiifit.si", firstName: "Ana", lastName: "Kovač", address: "Fitness ulica 2, Maribor", type: "both" },
     { email: "marko.novak@wiifit.si", firstName: "Marko", lastName: "Novak", address: "Sportna 5, Celje", type: "personal" },
     { email: "luka.horvat@wiifit.si", firstName: "Luka", lastName: "Horvat", address: "Fitnes cesta 10, Koper", type: "group" },
     { email: "sara.petek@wiifit.si", firstName: "Sara", lastName: "Petek", address: "Vadbeni trg 3, Novo Mesto", type: "both" },
-    { email: "tomaž.zupan@wiifit.si", firstName: "Tomaž", lastName: "Zupan", address: "Fitnes pot 7, Kranj", type: "personal" },
-    { email: "maja.žnidaršič@wiifit.si", firstName: "Maja", lastName: "Žnidaršič", address: "Aktivna ulica 12, Velenje", type: "group" },
+    { email: "tomaz.zupan@wiifit.si", firstName: "Tomaž", lastName: "Zupan", address: "Fitnes pot 7, Kranj", type: "personal" },
+    { email: "maja.znidarsic@wiifit.si", firstName: "Maja", lastName: "Žnidaršič", address: "Aktivna ulica 12, Velenje", type: "group" },
     { email: "rok.breznik@wiifit.si", firstName: "Rok", lastName: "Breznik", address: "Fitnes cesta 8, Ptuj", type: "both" }
   ];
 

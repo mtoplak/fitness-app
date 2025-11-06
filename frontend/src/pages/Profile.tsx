@@ -88,7 +88,7 @@ export default function Profile() {
   const [selectedBooking, setSelectedBooking] = useState<BookingDetails | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [bookingsFilter, setBookingsFilter] = useState<"all" | "upcoming">("all");
+  const [bookingsFilter, setBookingsFilter] = useState<"all" | "upcoming">("upcoming");
 
   const loadProfile = async () => {
     try {
@@ -305,8 +305,8 @@ export default function Profile() {
             </div>
             <Tabs value={bookingsFilter} onValueChange={(v) => setBookingsFilter(v as "all" | "upcoming")}>
               <TabsList>
-                <TabsTrigger value="all">Vse</TabsTrigger>
                 <TabsTrigger value="upcoming">Prihajajoče</TabsTrigger>
+                <TabsTrigger value="all">Vse</TabsTrigger>
               </TabsList>
             </Tabs>
           </div>

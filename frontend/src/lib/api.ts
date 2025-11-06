@@ -114,7 +114,55 @@ export const api = {
     startTime?: string;
     endTime?: string;
     duration?: number;
-  }>(`/user/profile/bookings/${id}`)
+  }>(`/user/profile/bookings/${id}`),
+
+  // Classes endpoints
+  getClasses: () => request<Array<{
+    _id: string;
+    name: string;
+    schedule: Array<{ dayOfWeek: number; startTime: string; endTime: string }>;
+    capacity?: number;
+    trainerUserId?: {
+      _id: string;
+      firstName?: string;
+      lastName?: string;
+      fullName: string;
+      email: string;
+    };
+  }>>("/classes"),
+
+  getClass: (id: string) => request<{
+    _id: string;
+    name: string;
+    schedule: Array<{ dayOfWeek: number; startTime: string; endTime: string }>;
+    capacity?: number;
+    trainerUserId?: {
+      _id: string;
+      firstName?: string;
+      lastName?: string;
+      fullName: string;
+      email: string;
+    };
+  }>(`/classes/${id}`),
+
+  getClassAvailability: (id: string, date: string) => request<{
+    capacity: number;
+    booked: number;
+    available: number;
+    isFull: boolean;
+  }>(`/classes/${id}/availability/${date}`),
+
+  bookClass: (id: string, classDate: string) => request<{
+    message: string;
+    booking: {
+      id: string;
+      classDate: string;
+      status: string;
+    };
+  }>(`/classes/${id}/book`, {
+    method: "POST",
+    body: JSON.stringify({ classDate })
+  })
 };
 
 
