@@ -210,4 +210,48 @@ router.get("/profile/bookings/:id", authenticateJwt, async (req: AuthRequest, re
   }
 });
 
+// DELETE /profile/bookings/:id - prekliči/odjavi rezervacijo (samo za člane)
+router.delete("/profile/bookings/:id", authenticateJwt, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!._id;
+    const user = req.user!;
+    const bookingId = req.params.id;
+
+    // Samo člani lahko prekličejo svoje rezervacije
+    if (user.role !== "member") {
+      return res.status(403).json({ message: "Nimate pravice za preklic rezervacij" });
+    }
+
+    // Najdi rezervacijo uporabnika
+    const booking = await Booking.findOne({ _id: bookingId, userId });
+
+    if (!booking) {
+      return res.status(404).json({ message: "Rezervacija ni najdena" });
+    }
+
+    // Preveri, če je rezervacija že preklicana
+    if (booking.status === "cancelled") {
+      return res.status(400).json({ message: "Rezervacija je že preklicana" });
+    }
+
+    // Preveri, če je termin že minil (samo za skupinske vadbe)
+    if (booking.type === "group_class" && booking.classDate) {
+      if (booking.classDate < new Date()) {
+        return res.status(400).json({ message: "Ne morete preklicati preteklih rezervacij" });
+      }
+    }
+
+    // Odstrani rezervacijo iz baze
+    await Booking.findByIdAndDelete(bookingId);
+
+    return res.json({ 
+      message: "Rezervacija uspešno preklicana",
+      bookingId: bookingId
+    });
+  } catch (error) {
+    console.error("Napaka pri preklicu rezervacije:", error);
+    return res.status(500).json({ message: "Napaka strežnika" });
+  }
+});
+
 export default router;

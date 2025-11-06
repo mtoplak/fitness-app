@@ -116,6 +116,13 @@ export const api = {
     duration?: number;
   }>(`/user/profile/bookings/${id}`),
 
+  cancelBooking: (id: string) => request<{
+    message: string;
+    bookingId: string;
+  }>(`/user/profile/bookings/${id}`, {
+    method: "DELETE"
+  }),
+
   // Classes endpoints
   getClasses: () => request<Array<{
     _id: string;

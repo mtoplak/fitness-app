@@ -11,7 +11,18 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/hooks/use-toast";
 
 type ProfileData = {
   user: {
@@ -89,6 +100,9 @@ export default function Profile() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [bookingsFilter, setBookingsFilter] = useState<"all" | "upcoming">("upcoming");
+  const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
+  const [bookingToCancel, setBookingToCancel] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const loadProfile = async () => {
     try {
@@ -145,6 +159,40 @@ export default function Profile() {
       hour: "2-digit",
       minute: "2-digit"
     });
+  };
+
+  const handleCancelBooking = async () => {
+    if (!bookingToCancel) return;
+
+    try {
+      await api.cancelBooking(bookingToCancel);
+      
+      toast({
+        title: "Uspešno",
+        description: "Rezervacija je bila preklicana",
+      });
+
+      // Ponovno naloži rezervacije
+      await loadBookings();
+      
+      // Zapri dialoge
+      setIsCancelDialogOpen(false);
+      setIsDialogOpen(false);
+      setBookingToCancel(null);
+      setSelectedBooking(null);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Napaka pri preklicu rezervacije";
+      toast({
+        title: "Napaka",
+        description: message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const openCancelDialog = (bookingId: string) => {
+    setBookingToCancel(bookingId);
+    setIsCancelDialogOpen(true);
   };
 
   const getStatusBadge = (status: string) => {
@@ -318,56 +366,78 @@ export default function Profile() {
             </div>
           ) : (
             <div className="space-y-4">
-              {bookings.map((booking) => (
-                <Card key={booking.id} className="hover:bg-accent/50 transition-colors cursor-pointer">
-                  <CardContent className="p-4" onClick={() => loadBookingDetails(booking.id)}>
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <h3 className="font-semibold">
-                            {booking.type === "group_class"
-                              ? booking.className
-                              : "Osebni trening"}
-                          </h3>
-                          {getStatusBadge(booking.status)}
-                        </div>
-                        <div className="space-y-1 text-sm text-muted-foreground">
-                          {booking.type === "group_class" && booking.classDate && (
-                            <div className="flex items-center gap-2">
-                              <Calendar className="h-4 w-4" />
-                              <span>{formatDate(booking.classDate)}</span>
-                            </div>
-                          )}
-                          {booking.type === "personal_training" && booking.startTime && (
-                            <>
+              {bookings.map((booking) => {
+                const canCancel = booking.type === "group_class" && 
+                                  booking.status === "confirmed" && 
+                                  booking.classDate && 
+                                  new Date(booking.classDate) > new Date();
+                
+                return (
+                  <Card key={booking.id} className="hover:bg-accent/50 transition-colors">
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1 cursor-pointer" onClick={() => loadBookingDetails(booking.id)}>
+                          <div className="flex items-center gap-2 mb-2">
+                            <h3 className="font-semibold">
+                              {booking.type === "group_class"
+                                ? booking.className
+                                : "Osebni trening"}
+                            </h3>
+                            {getStatusBadge(booking.status)}
+                          </div>
+                          <div className="space-y-1 text-sm text-muted-foreground">
+                            {booking.type === "group_class" && booking.classDate && (
                               <div className="flex items-center gap-2">
                                 <Calendar className="h-4 w-4" />
-                                <span>{formatDate(booking.startTime)}</span>
+                                <span>{formatDate(booking.classDate)}</span>
                               </div>
+                            )}
+                            {booking.type === "personal_training" && booking.startTime && (
+                              <>
+                                <div className="flex items-center gap-2">
+                                  <Calendar className="h-4 w-4" />
+                                  <span>{formatDate(booking.startTime)}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Clock className="h-4 w-4" />
+                                  <span>
+                                    {formatTime(booking.startTime)} - {booking.endTime && formatTime(booking.endTime)}
+                                    {booking.duration && ` (${booking.duration} min)`}
+                                  </span>
+                                </div>
+                              </>
+                            )}
+                            {booking.trainer && (
                               <div className="flex items-center gap-2">
-                                <Clock className="h-4 w-4" />
-                                <span>
-                                  {formatTime(booking.startTime)} - {booking.endTime && formatTime(booking.endTime)}
-                                  {booking.duration && ` (${booking.duration} min)`}
-                                </span>
+                                <User className="h-4 w-4" />
+                                <span>{booking.trainer.name}</span>
                               </div>
-                            </>
-                          )}
-                          {booking.trainer && (
-                            <div className="flex items-center gap-2">
-                              <User className="h-4 w-4" />
-                              <span>{booking.trainer.name}</span>
-                            </div>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <Button variant="ghost" size="sm" onClick={() => loadBookingDetails(booking.id)}>
+                            Podrobnosti
+                          </Button>
+                          {canCancel && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openCancelDialog(booking.id);
+                              }}
+                              className="text-destructive hover:text-destructive"
+                            >
+                              Odjava
+                            </Button>
                           )}
                         </div>
                       </div>
-                      <Button variant="ghost" size="sm">
-                        Podrobnosti
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           )}
         </CardContent>
@@ -466,10 +536,49 @@ export default function Profile() {
                 <p>Ustvarjeno: {formatDate(selectedBooking.createdAt)}</p>
                 <p>Posodobljeno: {formatDate(selectedBooking.updatedAt)}</p>
               </div>
+
+              {/* Gumb za preklic rezervacije - samo za skupinske vadbe in potrjene rezervacije */}
+              {selectedBooking.type === "group_class" && 
+               selectedBooking.status === "confirmed" && 
+               selectedBooking.classDate && 
+               new Date(selectedBooking.classDate) > new Date() && (
+                <div className="border-t pt-4 flex justify-end">
+                  <Button
+                    variant="destructive"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openCancelDialog(selectedBooking.id);
+                    }}
+                  >
+                    Prekliči rezervacijo
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </DialogContent>
       </Dialog>
+
+      {/* AlertDialog za potrditev preklica */}
+      <AlertDialog open={isCancelDialogOpen} onOpenChange={setIsCancelDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Ste prepričani?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Ali res želite preklicati to rezervacijo? Mesto bo postalo dostopno drugim uporabnikom.
+              Tega dejanja ni mogoče razveljaviti.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setBookingToCancel(null)}>
+              Ne, ohrani
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleCancelBooking} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Da, prekliči
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
