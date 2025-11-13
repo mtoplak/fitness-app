@@ -1,6 +1,7 @@
 import { useAuth } from "../../context/AuthContext";
 import { Button } from "@/components/ui/button";
 import ClassParticipants from "./ClassParticipants";
+import TrainerBookings from "./TrainerBookings";
 
 export default function TrainerDashboard() {
   const { user, logout } = useAuth();
@@ -17,7 +18,10 @@ export default function TrainerDashboard() {
           </div>
         </div>
 
-        <ClassParticipants />
+        <div className="space-y-6">
+          <TrainerBookings />
+          <ClassParticipants />
+        </div>
       </div>
     </section>
   );

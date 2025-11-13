@@ -8,6 +8,7 @@ import meRoutes from "./routes/me.js";
 import classesRoutes from "./routes/classes.js";
 import profileRoutes from "./routes/profile.js";
 import membershipsRoutes from "./routes/memberships.js";
+import trainersRoutes from "./routes/trainers.js";
 import { startReminderJob } from "./jobs/reminderJob.js";
 
 async function bootstrap() {
@@ -26,6 +27,7 @@ async function bootstrap() {
   app.use("/classes", classesRoutes);
   app.use("/user", profileRoutes);
   app.use("/memberships", membershipsRoutes);
+  app.use("/trainers", trainersRoutes);
 
   app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
     // Fallback error handler

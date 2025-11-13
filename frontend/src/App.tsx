@@ -17,6 +17,7 @@ import Schedule from "./pages/Schedule";
 import Profile from "./pages/Profile";
 import Membership from "./pages/Membership";
 import DashboardRouter from "./pages/DashboardRouter";
+import PersonalTraining from "./pages/PersonalTraining";
 
 const queryClient = new QueryClient();
 
@@ -110,6 +111,16 @@ const App = () => (
                 <SiteLayout>
                   <ProtectedRoute>
                     <DashboardRouter />
+                  </ProtectedRoute>
+                </SiteLayout>
+              }
+            />
+            <Route
+              path="/personal-training"
+              element={
+                <SiteLayout>
+                  <ProtectedRoute requireRole="member">
+                    <PersonalTraining />
                   </ProtectedRoute>
                 </SiteLayout>
               }

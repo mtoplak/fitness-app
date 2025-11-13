@@ -277,7 +277,69 @@ export const api = {
       };
       bookedAt: string;
     }>;
-  }>(`/classes/${classId}/participants/${date}`)
+  }>(`/classes/${classId}/participants/${date}`),
+
+  // Trainers
+  getTrainers: () => request<Array<{
+    id: string;
+    firstName?: string;
+    lastName?: string;
+    fullName: string;
+    email: string;
+    hourlyRate: number;
+    trainerType: "personal" | "group" | "both";
+  }>>("/trainers"),
+
+  getTrainerAvailability: (trainerId: string, date: string) => request<{
+    trainerId: string;
+    trainerName: string;
+    date: string;
+    hourlyRate: number;
+    slots: Array<{
+      startTime: string;
+      endTime: string;
+      available: boolean;
+      displayTime: string;
+    }>;
+  }>(`/trainers/${trainerId}/availability?date=${date}`),
+
+  bookPersonalTraining: (trainerId: string, data: { startTime: string; endTime: string; notes?: string }) =>
+    request<{
+      message: string;
+      booking: {
+        id: string;
+        trainerId: string;
+        trainerName: string;
+        startTime: string;
+        endTime: string;
+        status: string;
+        hourlyRate: number;
+      };
+    }>(`/trainers/${trainerId}/book`, {
+      method: "POST",
+      body: JSON.stringify(data)
+    }),
+
+  getMyTrainerBookings: (upcoming?: boolean) => {
+    const params = upcoming ? "?upcoming=true" : "";
+    return request<{
+      bookings: Array<{
+        id: string;
+        client: {
+          id: string;
+          firstName?: string;
+          lastName?: string;
+          fullName: string;
+          email: string;
+        };
+        startTime: string;
+        endTime: string;
+        notes: string;
+        status: string;
+        createdAt: string;
+      }>;
+    }>(`/trainers/my-bookings${params}`);
+  }
 };
 
 
