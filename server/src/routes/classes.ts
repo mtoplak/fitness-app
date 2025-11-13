@@ -261,5 +261,150 @@ router.post("/:id/book", authenticateJwt, async (req: AuthRequest, res) => {
   }
 });
 
+// GET /classes/my-classes/list -> trener pridobi svoje vadbe
+router.get("/my-classes/list", authenticateJwt, async (req: AuthRequest, res) => {
+  try {
+    const user = req.user!;
+
+    if (user.role !== "trainer") {
+      return res.status(403).json({ message: "Samo trenerji lahko dostopajo do svojih vadb" });
+    }
+
+    const classes = await GroupClass.find({ trainerUserId: user._id })
+      .sort({ name: 1 })
+      .lean();
+
+    return res.json({ classes });
+  } catch (err) {
+    console.error("Napaka pri pridobivanju vadb:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
+// POST /classes/create -> trener ustvari novo vadbo
+router.post("/create", authenticateJwt, async (req: AuthRequest, res) => {
+  try {
+    const user = req.user!;
+
+    if (user.role !== "trainer") {
+      return res.status(403).json({ message: "Samo trenerji lahko ustvarjajo vadbe" });
+    }
+
+    const { name, description, difficulty, duration, capacity, schedule } = req.body;
+
+    if (!name || !schedule || schedule.length === 0) {
+      return res.status(400).json({ message: "Ime vadbe in urnik sta obvezna" });
+    }
+
+    const newClass = await GroupClass.create({
+      name,
+      description: description || "",
+      difficulty: difficulty || "medium",
+      duration: duration || 60,
+      capacity: capacity || 20,
+      schedule,
+      trainerUserId: user._id
+    });
+
+    console.log("Nova vadba ustvarjena:", newClass._id);
+
+    return res.status(201).json({
+      message: "Vadba uspešno ustvarjena",
+      class: newClass
+    });
+  } catch (err) {
+    console.error("Napaka pri ustvarjanju vadbe:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
+// PUT /classes/:id/update -> trener posodobi vadbo
+router.put("/:id/update", authenticateJwt, async (req: AuthRequest, res) => {
+  try {
+    const user = req.user!;
+    const { id } = req.params;
+
+    if (user.role !== "trainer") {
+      return res.status(403).json({ message: "Samo trenerji lahko urejajo vadbe" });
+    }
+
+    const groupClass = await GroupClass.findById(id);
+    if (!groupClass) {
+      return res.status(404).json({ message: "Vadba ni najdena" });
+    }
+
+    // Preveri ali je to vadba tega trenerja
+    if (groupClass.trainerUserId?.toString() !== (user._id as any).toString()) {
+      return res.status(403).json({ message: "Lahko urejate samo svoje vadbe" });
+    }
+
+    const { name, description, difficulty, duration, capacity, schedule } = req.body;
+
+    // Posodobi polja
+    if (name) groupClass.name = name;
+    if (description !== undefined) groupClass.description = description;
+    if (difficulty) groupClass.difficulty = difficulty;
+    if (duration) groupClass.duration = duration;
+    if (capacity) groupClass.capacity = capacity;
+    if (schedule) groupClass.schedule = schedule;
+
+    await groupClass.save();
+
+    console.log("Vadba posodobljena:", groupClass._id);
+
+    return res.json({
+      message: "Vadba uspešno posodobljena",
+      class: groupClass
+    });
+  } catch (err) {
+    console.error("Napaka pri posodabljanju vadbe:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
+// DELETE /classes/:id/delete -> trener izbriše vadbo
+router.delete("/:id/delete", authenticateJwt, async (req: AuthRequest, res) => {
+  try {
+    const user = req.user!;
+    const { id } = req.params;
+
+    if (user.role !== "trainer") {
+      return res.status(403).json({ message: "Samo trenerji lahko brišejo vadbe" });
+    }
+
+    const groupClass = await GroupClass.findById(id);
+    if (!groupClass) {
+      return res.status(404).json({ message: "Vadba ni najdena" });
+    }
+
+    // Preveri ali je to vadba tega trenerja
+    if (groupClass.trainerUserId?.toString() !== (user._id as any).toString()) {
+      return res.status(403).json({ message: "Lahko brišete samo svoje vadbe" });
+    }
+
+    // Preveri če ima vadba aktivne rezervacije
+    const activeBookings = await Booking.countDocuments({
+      groupClassId: id,
+      status: "confirmed",
+      classDate: { $gte: new Date() }
+    });
+
+    if (activeBookings > 0) {
+      return res.status(400).json({ 
+        message: `Ne morete izbrisati vadbe z aktivnimi rezervacijami (${activeBookings})` 
+      });
+    }
+
+    await GroupClass.findByIdAndDelete(id);
+
+    console.log("Vadba izbrisana:", id);
+
+    return res.json({ message: "Vadba uspešno izbrisana" });
+  } catch (err) {
+    console.error("Napaka pri brisanju vadbe:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
 export default router;
 

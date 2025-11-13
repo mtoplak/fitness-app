@@ -2,6 +2,7 @@ import { useAuth } from "../../context/AuthContext";
 import { Button } from "@/components/ui/button";
 import ClassParticipants from "./ClassParticipants";
 import TrainerBookings from "./TrainerBookings";
+import ClassManagement from "./ClassManagement";
 
 export default function TrainerDashboard() {
   const { user, logout } = useAuth();
@@ -19,6 +20,7 @@ export default function TrainerDashboard() {
         </div>
 
         <div className="space-y-6">
+          <ClassManagement />
           <TrainerBookings />
           <ClassParticipants />
         </div>

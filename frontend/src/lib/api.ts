@@ -339,7 +339,85 @@ export const api = {
         createdAt: string;
       }>;
     }>(`/trainers/my-bookings${params}`);
-  }
+  },
+
+  // Class Management (Trainer)
+  getMyClasses: () => request<{
+    classes: Array<{
+      _id: string;
+      name: string;
+      description?: string;
+      difficulty?: "easy" | "medium" | "hard";
+      duration?: number;
+      capacity?: number;
+      schedule: Array<{
+        dayOfWeek: number;
+        startTime: string;
+        endTime: string;
+      }>;
+      trainerUserId?: string;
+      createdAt: string;
+      updatedAt: string;
+    }>;
+  }>("/classes/my-classes/list"),
+
+  createClass: (data: {
+    name: string;
+    description?: string;
+    difficulty?: "easy" | "medium" | "hard";
+    duration?: number;
+    capacity?: number;
+    schedule: Array<{
+      dayOfWeek: number;
+      startTime: string;
+      endTime: string;
+    }>;
+  }) => request<{
+    message: string;
+    class: {
+      _id: string;
+      name: string;
+      description?: string;
+      difficulty?: string;
+      duration?: number;
+      capacity?: number;
+    };
+  }>("/classes/create", {
+    method: "POST",
+    body: JSON.stringify(data)
+  }),
+
+  updateClass: (id: string, data: {
+    name?: string;
+    description?: string;
+    difficulty?: "easy" | "medium" | "hard";
+    duration?: number;
+    capacity?: number;
+    schedule?: Array<{
+      dayOfWeek: number;
+      startTime: string;
+      endTime: string;
+    }>;
+  }) => request<{
+    message: string;
+    class: {
+      _id: string;
+      name: string;
+      description?: string;
+      difficulty?: string;
+      duration?: number;
+      capacity?: number;
+    };
+  }>(`/classes/${id}/update`, {
+    method: "PUT",
+    body: JSON.stringify(data)
+  }),
+
+  deleteClass: (id: string) => request<{
+    message: string;
+  }>(`/classes/${id}/delete`, {
+    method: "DELETE"
+  })
 };
 
 

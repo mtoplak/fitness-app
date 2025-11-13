@@ -8,6 +8,9 @@ export interface WeeklyTimeSlot {
 
 export interface GroupClassDocument extends Document {
   name: string;
+  description?: string; // opis vadbe
+  difficulty?: "easy" | "medium" | "hard"; // zahtevnost
+  duration?: number; // trajanje v minutah
   schedule: WeeklyTimeSlot[]; // weekly recurrence pattern
   trainerUserId?: Types.ObjectId; // optional primary trainer
   capacity?: number;
@@ -27,6 +30,9 @@ const timeSlotSchema = new Schema<WeeklyTimeSlot>(
 const groupClassSchema = new Schema<GroupClassDocument>(
   {
     name: { type: String, required: true },
+    description: { type: String },
+    difficulty: { type: String, enum: ["easy", "medium", "hard"] },
+    duration: { type: Number, min: 1 }, // v minutah
     schedule: { type: [timeSlotSchema], default: [] },
     trainerUserId: { type: Schema.Types.ObjectId, ref: "User" },
     capacity: { type: Number, min: 1 }
