@@ -2,6 +2,7 @@ import { Router } from "express";
 import { GroupClass } from "../models/GroupClass.js";
 import { Booking } from "../models/Booking.js";
 import { User } from "../models/User.js";
+import { Notification } from "../models/Notification.js";
 import { authenticateJwt, AuthRequest } from "../middleware/auth.js";
 
 const router = Router();
@@ -213,6 +214,38 @@ router.post("/:id/book", authenticateJwt, async (req: AuthRequest, res) => {
     });
 
     console.log("Booking created with classDate:", booking.classDate);
+
+    // Ustvari opomnik (pošlje se 24 ur pred vadbo)
+    try {
+      // Najdi ustrezen time slot za ta dan v tednu
+      const dayOfWeek = bookingDate.getUTCDay();
+      const timeSlot = groupClass.schedule.find(slot => slot.dayOfWeek === dayOfWeek);
+      
+      if (timeSlot) {
+        // Izračunaj čas pošiljanja (24 ur pred vadbo)
+        const [hours, minutes] = timeSlot.startTime.split(':').map(Number);
+        const classDateTime = new Date(bookingDate);
+        classDateTime.setUTCHours(hours, minutes, 0, 0);
+        
+        const reminderTime = new Date(classDateTime);
+        reminderTime.setHours(reminderTime.getHours() - 24); // 24 ur prej
+
+        await Notification.create({
+          userId,
+          type: "reminder",
+          title: `Opomnik: ${groupClass.name}`,
+          message: `Opominjamo vas na vadbo ${groupClass.name} jutri ob ${timeSlot.startTime}.`,
+          status: "pending",
+          scheduledFor: reminderTime,
+          bookingId: booking._id
+        });
+
+        console.log("Reminder created for:", reminderTime.toISOString());
+      }
+    } catch (reminderErr) {
+      console.error("Napaka pri ustvarjanju opomnika:", reminderErr);
+      // Ne vrnemo napake, ker je booking uspel
+    }
 
     return res.status(201).json({
       message: "Vadba uspešno rezervirana",

@@ -4,6 +4,7 @@ import { User } from "../models/User.js";
 import { Membership, MembershipPackage } from "../models/Membership.js";
 import { Booking } from "../models/Booking.js";
 import { GroupClass } from "../models/GroupClass.js";
+import { Notification } from "../models/Notification.js";
 
 const router = Router();
 
@@ -244,6 +245,17 @@ router.delete("/profile/bookings/:id", authenticateJwt, async (req: AuthRequest,
       if (booking.classDate < new Date()) {
         return res.status(400).json({ message: "Ne morete preklicati preteklih rezervacij" });
       }
+    }
+
+    // Prekliči povezan opomnik (če obstaja)
+    try {
+      await Notification.updateMany(
+        { bookingId: bookingId, status: "pending" },
+        { $set: { status: "cancelled" } }
+      );
+    } catch (notifErr) {
+      console.error("Napaka pri preklicu opomnika:", notifErr);
+      // Ne blokiraj preklica bookinga
     }
 
     // Odstrani rezervacijo iz baze

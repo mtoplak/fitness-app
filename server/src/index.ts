@@ -8,6 +8,7 @@ import meRoutes from "./routes/me.js";
 import classesRoutes from "./routes/classes.js";
 import profileRoutes from "./routes/profile.js";
 import membershipsRoutes from "./routes/memberships.js";
+import { startReminderJob } from "./jobs/reminderJob.js";
 
 async function bootstrap() {
   await connectToDatabase();
@@ -34,6 +35,9 @@ async function bootstrap() {
 
   app.listen(env.port, () => {
     console.log(`Server listening on http://localhost:${env.port}`);
+    
+    // Zaženi cron job za pošiljanje opomnikov
+    startReminderJob();
   });
 }
 

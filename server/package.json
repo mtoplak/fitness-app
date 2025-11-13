@@ -14,16 +14,21 @@
     "seed:memberships": "tsx src/scripts/seedMemberships.ts",
     "seed:bookings": "tsx src/scripts/seedBookings.ts",
     "seed:packages": "tsx src/scripts/seedPackages.ts",
-    "seed:all": "tsx src/scripts/seedUsers.ts && tsx src/scripts/seedMemberships.ts && tsx src/scripts/seedClasses.ts && tsx src/scripts/seedBookings.ts && tsx src/scripts/seedPackages.ts"
+    "seed:all": "tsx src/scripts/seedUsers.ts && tsx src/scripts/seedMemberships.ts && tsx src/scripts/seedClasses.ts && tsx src/scripts/seedBookings.ts && tsx src/scripts/seedPackages.ts",
+    "test:email": "tsx src/scripts/testEmailReminder.ts"
   },
   "dependencies": {
+    "@types/node-cron": "^3.0.11",
+    "@types/nodemailer": "^7.0.3",
     "bcryptjs": "^2.4.3",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.7.0"
+    "mongoose": "^8.7.0",
+    "node-cron": "^4.2.1",
+    "nodemailer": "^7.0.10"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
@@ -37,5 +42,3 @@
     "typescript": "^5.6.3"
   }
 }
-
-
