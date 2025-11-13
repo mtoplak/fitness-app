@@ -36,7 +36,8 @@ type GroupClass = {
 };
 
 const dayNames = ["Pon", "Tor", "Sre", "Čet", "Pet", "Sob", "Ned"];
-const dayNamesFull = ["Ponedeljek", "Torek", "Sreda", "Četrtek", "Petek", "Sobota", "Nedelja"];
+// Array z imeni dni kjer index ustreza Date.getDay() (0=Nedelja, 1=Ponedeljek, ...)
+const dayNamesFullByGetDay = ["Nedelja", "Ponedeljek", "Torek", "Sreda", "Četrtek", "Petek", "Sobota"];
 
 function toMinutes(t: string): number {
   const [h, m] = t.split(":").map(Number);
@@ -82,6 +83,14 @@ function isDateToday(date: Date): boolean {
   const checkDate = new Date(date);
   checkDate.setHours(0, 0, 0, 0);
   return checkDate.getTime() === today.getTime();
+}
+
+// Helper funkcija za formatiranje datuma v YYYY-MM-DD (lokalni čas)
+function formatDateToYYYYMMDD(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 export default function Schedule() {
@@ -183,7 +192,8 @@ export default function Schedule() {
     
     // Pridobi razpoložljivost za ta datum
     try {
-      const avail = await api.getClassAvailability(groupClass._id, classDate.toISOString().split('T')[0]);
+      const dateStr = formatDateToYYYYMMDD(classDate);
+      const avail = await api.getClassAvailability(groupClass._id, dateStr);
       setAvailability(avail);
     } catch (e) {
       console.error("Napaka pri preverjanju razpoložljivosti:", e);
@@ -197,7 +207,8 @@ export default function Schedule() {
     setBookingLoading(true);
     
     try {
-      await api.bookClass(selectedClass.class._id, selectedClass.date.toISOString().split('T')[0]);
+      const dateStr = formatDateToYYYYMMDD(selectedClass.date);
+      await api.bookClass(selectedClass.class._id, dateStr);
       
       toast({
         title: "Uspešno rezervirano!",
@@ -419,7 +430,7 @@ export default function Schedule() {
                 <div className="flex items-center gap-2 text-sm">
                   <Calendar className="h-4 w-4 text-muted-foreground" />
                   <span>
-                    {dayNamesFull[selectedClass.slot.dayOfWeek]}, {selectedClass.date.toLocaleDateString('sl-SI')}
+                    {dayNamesFullByGetDay[selectedClass.date.getDay()]}, {selectedClass.date.toLocaleDateString('sl-SI')}
                   </span>
                 </div>
                 <div className="flex items-center gap-2 text-sm">

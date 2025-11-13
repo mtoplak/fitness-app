@@ -280,6 +280,15 @@ export default function Profile() {
               </div>
             </div>
           </CardContent>
+          {profile.user.role === "trainer" && (
+            <CardContent className="border-t pt-4">
+              <Link to="/dashboard">
+                <Button variant="default" className="w-full">
+                  Trenerski Dashboard
+                </Button>
+              </Link>
+            </CardContent>
+          )}
         </Card>
 
         {/* Naročnina - samo za člane */}

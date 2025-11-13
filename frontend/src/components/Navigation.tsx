@@ -63,6 +63,9 @@ const Navigation = () => {
                 {user.role === "member" && (
                   <Link to="/membership"><Button variant="ghost">Naročnina</Button></Link>
                 )}
+                {user.role === "trainer" && (
+                  <Link to="/dashboard"><Button variant="ghost">Dashboard</Button></Link>
+                )}
                 <Button variant="outline" onClick={logout}>Odjava</Button>
               </>
             ) : (
@@ -102,6 +105,9 @@ const Navigation = () => {
                   <Link to="/profile"><Button variant="ghost" className="w-full">Profil</Button></Link>
                   {user.role === "member" && (
                     <Link to="/membership"><Button variant="ghost" className="w-full">Naročnina</Button></Link>
+                  )}
+                  {user.role === "trainer" && (
+                    <Link to="/dashboard"><Button variant="ghost" className="w-full">Dashboard</Button></Link>
                   )}
                   <Button variant="outline" className="w-full" onClick={() => { setIsMenuOpen(false); logout(); }}>Odjava</Button>
                 </>

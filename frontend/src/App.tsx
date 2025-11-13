@@ -16,6 +16,7 @@ import ProteinCalculator from "./pages/ProteinCalculator";
 import Schedule from "./pages/Schedule";
 import Profile from "./pages/Profile";
 import Membership from "./pages/Membership";
+import DashboardRouter from "./pages/DashboardRouter";
 
 const queryClient = new QueryClient();
 
@@ -97,8 +98,18 @@ const App = () => (
               path="/membership"
               element={
                 <SiteLayout>
-                  <ProtectedRoute>
+                  <ProtectedRoute requireRole="member">
                     <Membership />
+                  </ProtectedRoute>
+                </SiteLayout>
+              }
+            />
+            <Route
+              path="/dashboard"
+              element={
+                <SiteLayout>
+                  <ProtectedRoute>
+                    <DashboardRouter />
                   </ProtectedRoute>
                 </SiteLayout>
               }

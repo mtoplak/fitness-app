@@ -257,7 +257,27 @@ export const api = {
     message: string;
   }>("/memberships/reactivate", {
     method: "POST"
-  })
+  }),
+
+  // Class participants
+  getClassParticipants: (classId: string, date: string) => request<{
+    className: string;
+    classDate: string;
+    capacity: number;
+    totalParticipants: number;
+    availableSpots: number;
+    participants: Array<{
+      id: string;
+      user: {
+        id: string;
+        firstName?: string;
+        lastName?: string;
+        fullName: string;
+        email: string;
+      };
+      bookedAt: string;
+    }>;
+  }>(`/classes/${classId}/participants/${date}`)
 };
 
 

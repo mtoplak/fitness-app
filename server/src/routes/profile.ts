@@ -77,9 +77,14 @@ router.get("/profile/bookings", authenticateJwt, async (req: AuthRequest, res) =
 
     // Če želimo samo prihajajoče rezervacije
     if (upcoming === "true") {
+      const now = new Date();
+      // Nastavi uro na začetek dneva za primerjavo
+      now.setHours(0, 0, 0, 0);
+      
+      filter.status = "confirmed"; // Samo potrjene rezervacije
       filter.$or = [
-        { type: "group_class", classDate: { $gte: new Date() } },
-        { type: "personal_training", startTime: { $gte: new Date() } }
+        { type: "group_class", classDate: { $gte: now } },
+        { type: "personal_training", startTime: { $gte: now } }
       ];
     }
 

@@ -44,11 +44,11 @@ router.get("/:id/availability/:date", async (req, res) => {
       return res.status(404).json({ message: "Vadba ni najdena" });
     }
 
-    // Pretvori datum v Date objekt
-    const classDate = new Date(date);
-    classDate.setHours(0, 0, 0, 0);
+    // Pretvori datum v Date objekt - uporabi UTC poldne da se izognemo težavam s časovnimi conami
+    const [year, month, day] = date.split('-').map(Number);
+    const classDate = new Date(Date.UTC(year, month - 1, day, 12, 0, 0, 0));
     const nextDay = new Date(classDate);
-    nextDay.setDate(nextDay.getDate() + 1);
+    nextDay.setUTCDate(nextDay.getUTCDate() + 1);
 
     // Preštej obstoječe rezervacije za ta datum
     const bookingsCount = await Booking.countDocuments({
@@ -72,6 +72,70 @@ router.get("/:id/availability/:date", async (req, res) => {
   }
 });
 
+// GET /classes/:id/participants/:date -> pridobi seznam udeležencev za določen datum
+router.get("/:id/participants/:date", authenticateJwt, async (req: AuthRequest, res) => {
+  try {
+    const { id, date } = req.params;
+    const user = req.user!;
+
+    // Samo trenerji in admini lahko vidijo udeležence
+    if (user.role !== "trainer" && user.role !== "admin") {
+      return res.status(403).json({ message: "Samo trenerji lahko vidijo udeležence vadbe" });
+    }
+
+    const groupClass = await GroupClass.findById(id);
+    if (!groupClass) {
+      return res.status(404).json({ message: "Vadba ni najdena" });
+    }
+
+    // Pretvori datum v Date objekt - uporabi UTC poldne da se izognemo težavam s časovnimi conami
+    const [year, month, day] = date.split('-').map(Number);
+    const classDate = new Date(Date.UTC(year, month - 1, day, 12, 0, 0, 0));
+    const nextDay = new Date(classDate);
+    nextDay.setUTCDate(nextDay.getUTCDate() + 1);
+
+    console.log("Searching for bookings between:", classDate, "and", nextDay);
+
+    // Pridobi vse rezervacije za ta datum z uporabniškimi podatki
+    const bookings = await Booking.find({
+      groupClassId: id,
+      classDate: { $gte: classDate, $lt: nextDay },
+      status: "confirmed"
+    })
+    .populate("userId", "firstName lastName fullName email")
+    .sort({ createdAt: 1 })
+    .lean();
+
+    console.log("Found bookings:", bookings.length);
+
+    const participants = bookings.map((booking: any) => ({
+      id: booking._id,
+      user: {
+        id: booking.userId._id,
+        firstName: booking.userId.firstName,
+        lastName: booking.userId.lastName,
+        fullName: booking.userId.fullName,
+        email: booking.userId.email
+      },
+      bookedAt: booking.createdAt
+    }));
+
+    const capacity = groupClass.capacity || 0;
+
+    return res.json({
+      className: groupClass.name,
+      classDate: date,
+      capacity,
+      totalParticipants: participants.length,
+      availableSpots: Math.max(0, capacity - participants.length),
+      participants
+    });
+  } catch (err) {
+    console.error("Napaka pri pridobivanju udeležencev:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
 // POST /classes/:id/book -> rezerviraj vadbo
 router.post("/:id/book", authenticateJwt, async (req: AuthRequest, res) => {
   try {
@@ -90,11 +154,26 @@ router.post("/:id/book", authenticateJwt, async (req: AuthRequest, res) => {
       return res.status(404).json({ message: "Vadba ni najdena" });
     }
 
-    // Preveri datum
-    const bookingDate = new Date(classDate);
-    bookingDate.setHours(0, 0, 0, 0);
+    console.log("Received classDate:", classDate, "Type:", typeof classDate);
+
+    // Preveri datum - parsiramo datum kot YYYY-MM-DD
+    // Uporabimo Date.UTC da direktno ustvarimo UTC datum brez pretvorb časovnih con
+    let bookingDate: Date;
+    
+    if (typeof classDate === 'string' && classDate.includes('-')) {
+      const [year, month, day] = classDate.split('-').map(Number);
+      bookingDate = new Date(Date.UTC(year, month - 1, day, 12, 0, 0, 0)); // Uporabi poldne UTC
+    } else {
+      // Fallback če pride v drugem formatu
+      bookingDate = new Date(classDate);
+      bookingDate.setUTCHours(12, 0, 0, 0); // Nastavi na poldne UTC
+    }
+    
     const nextDay = new Date(bookingDate);
-    nextDay.setDate(nextDay.getDate() + 1);
+    nextDay.setUTCDate(nextDay.getUTCDate() + 1);
+
+    console.log("Parsed booking date (UTC):", bookingDate.toISOString());
+    console.log("Looking for bookings between:", bookingDate.toISOString(), "and", nextDay.toISOString());
 
     // Preveri, ali uporabnik že ima rezervacijo za ta datum in vadbo
     const existingBooking = await Booking.findOne({
@@ -115,10 +194,14 @@ router.post("/:id/book", authenticateJwt, async (req: AuthRequest, res) => {
       status: { $in: ["confirmed"] }
     });
 
+    console.log("Existing bookings for this date:", bookingsCount);
+
     const capacity = groupClass.capacity || 0;
     if (bookingsCount >= capacity) {
       return res.status(400).json({ message: "Ni več prostih mest za to vadbo" });
     }
+
+    console.log("Creating booking with date:", bookingDate.toISOString());
 
     // Ustvari rezervacijo
     const booking = await Booking.create({
@@ -128,6 +211,8 @@ router.post("/:id/book", authenticateJwt, async (req: AuthRequest, res) => {
       groupClassId: id,
       classDate: bookingDate
     });
+
+    console.log("Booking created with classDate:", booking.classDate);
 
     return res.status(201).json({
       message: "Vadba uspešno rezervirana",
