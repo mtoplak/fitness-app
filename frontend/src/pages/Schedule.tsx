@@ -101,6 +101,7 @@ export default function Schedule() {
     isFull: boolean;
   } | null>(null);
   const [bookingLoading, setBookingLoading] = useState(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
   
   const { user } = useAuth();
   const { toast } = useToast();
@@ -124,6 +125,15 @@ export default function Schedule() {
 
   useEffect(() => {
     loadClasses();
+  }, []);
+
+  // Update current time every minute
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000); // Update every minute
+
+    return () => clearInterval(timer);
   }, []);
 
   const loadClasses = async () => {
@@ -304,6 +314,10 @@ export default function Schedule() {
                     const isPastDay = isDatePast(dayDate);
                     const isTodayDay = isDateToday(dayDate);
                     
+                    // Calculate current time position for today
+                    const currentMinutes = currentTime.getHours() * 60 + currentTime.getMinutes();
+                    const showTimeLine = isTodayDay && currentMinutes >= minute && currentMinutes < minute + 30;
+                    
                     // find if a class starts now
                     const starting = timetable.byDay[dayOfWeek].find((c) => c.start === minute);
                     // find if this time is covered by a previous rowSpan of a class already rendered
@@ -315,16 +329,30 @@ export default function Schedule() {
                         s.dayOfWeek === dayOfWeek && toMinutes(s.startTime) === starting.start
                       );
                       
+                      // Check if this class has already ended today
+                      const isClassPast = isTodayDay && starting.end <= currentMinutes;
+                      
                       row.push(
                         <td
                           key={`d${day}-r${rowIdx}`}
                           rowSpan={duration}
-                          className={`align-top border-t border-l first:border-l-0 border-border px-2 py-2 ${isTodayDay ? 'bg-primary/5' : ''}`}
+                          className={`align-top border-t border-l first:border-l-0 border-border px-2 py-2 ${isTodayDay ? 'bg-primary/5' : ''} relative`}
                         >
+                          {showTimeLine && (
+                            <div 
+                              className="absolute left-0 right-0 z-20 flex items-center"
+                              style={{
+                                top: `${((currentMinutes - minute) / 30) * 100}%`
+                              }}
+                            >
+                              <div className="w-2 h-2 bg-red-500 rounded-full -ml-1" />
+                              <div className="flex-1 h-0.5 bg-red-500" />
+                            </div>
+                          )}
                           <div 
-                            onClick={() => !isPastDay && matchingClass && matchingSlot && handleClassClick(matchingClass, matchingSlot)}
+                            onClick={() => !isPastDay && !isClassPast && matchingClass && matchingSlot && handleClassClick(matchingClass, matchingSlot)}
                             className={`rounded-md border border-border bg-card p-2 transition-colors ${
-                              isPastDay 
+                              isPastDay || isClassPast
                                 ? 'opacity-50 cursor-not-allowed' 
                                 : 'hover:bg-accent cursor-pointer'
                             }`}
@@ -336,7 +364,7 @@ export default function Schedule() {
                                 Kapaciteta: {matchingClass.capacity}
                               </div>
                             )}
-                            {isPastDay && (
+                            {(isPastDay || isClassPast) && (
                               <div className="text-xs text-muted-foreground/70 mt-1">Preteklo</div>
                             )}
                           </div>
@@ -347,7 +375,19 @@ export default function Schedule() {
                       row.push(null);
                     } else {
                       row.push(
-                        <td key={`d${day}-r${rowIdx}`} className={`border-t border-l first:border-l-0 border-border px-2 py-2 ${isTodayDay ? 'bg-primary/5' : ''}`} />
+                        <td key={`d${day}-r${rowIdx}`} className={`border-t border-l first:border-l-0 border-border px-2 py-2 ${isTodayDay ? 'bg-primary/5' : ''} relative`}>
+                          {showTimeLine && (
+                            <div 
+                              className="absolute left-0 right-0 z-20 flex items-center"
+                              style={{
+                                top: `${((currentMinutes - minute) / 30) * 100}%`
+                              }}
+                            >
+                              <div className="w-2 h-2 bg-red-500 rounded-full -ml-1" />
+                              <div className="flex-1 h-0.5 bg-red-500" />
+                            </div>
+                          )}
+                        </td>
                       );
                     }
                   }

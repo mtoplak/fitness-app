@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Menu } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
@@ -7,6 +7,29 @@ import { useAuth } from "../context/AuthContext";
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const handlePonudbaClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    
+    if (location.pathname === '/') {
+      // Already on homepage, just scroll to section
+      const element = document.getElementById('ponudba');
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+      }
+    } else {
+      // Navigate to homepage first, then scroll
+      navigate('/');
+      setTimeout(() => {
+        const element = document.getElementById('ponudba');
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 100);
+    }
+  };
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
@@ -17,9 +40,13 @@ const Navigation = () => {
               WiiFit
             </a>
             <div className="hidden md:flex space-x-6">
-              <Link to="/#ponudba" className="text-foreground/80 hover:text-primary transition-colors">
+              <a 
+                href="#ponudba" 
+                onClick={handlePonudbaClick}
+                className="text-foreground/80 hover:text-primary transition-colors cursor-pointer"
+              >
                 Ponudba
-              </Link>
+              </a>
               <Link to="/urnik" className="text-foreground/80 hover:text-primary transition-colors">
                 Urnik
               </Link>
@@ -56,9 +83,13 @@ const Navigation = () => {
 
         {isMenuOpen && (
           <div className="md:hidden py-4 space-y-2">
-            <Link to="/#ponudba" className="block py-2 text-foreground/80 hover:text-primary">
+            <a 
+              href="#ponudba" 
+              onClick={(e) => { handlePonudbaClick(e); setIsMenuOpen(false); }}
+              className="block py-2 text-foreground/80 hover:text-primary cursor-pointer"
+            >
               Ponudba
-            </Link>
+            </a>
             <Link to="/urnik" className="block py-2 text-foreground/80 hover:text-primary">
               Urnik
             </Link>
