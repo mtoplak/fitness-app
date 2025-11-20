@@ -121,7 +121,7 @@ export default function ClassManagement() {
     setSubmitting(true);
     try {
       if (editingClass) {
-        await api.updateClass(editingClass._id, {
+        const result = await api.updateClass(editingClass._id, {
           name: formName,
           description: formDescription,
           difficulty: formDifficulty,
@@ -131,10 +131,10 @@ export default function ClassManagement() {
         });
         toast({
           title: "Uspešno posodobljeno",
-          description: "Vadba je bila uspešno posodobljena"
+          description: result.message || "Vadba je bila uspešno posodobljena"
         });
       } else {
-        await api.createClass({
+        const result = await api.createClass({
           name: formName,
           description: formDescription,
           difficulty: formDifficulty,
@@ -142,9 +142,10 @@ export default function ClassManagement() {
           capacity: formCapacity,
           schedule: formSchedule
         });
+        
         toast({
           title: "Uspešno ustvarjeno",
-          description: "Nova vadba poslana na odobritev administratorju"
+          description: result.message || "Nova vadba poslana na odobritev administratorju"
         });
       }
       
@@ -204,7 +205,7 @@ export default function ClassManagement() {
         <div className="flex items-center justify-between">
           <div>
             <CardTitle>Upravljanje z vadbami</CardTitle>
-            <CardDescription>Dodajte nove vadbe ali uredite obstoječe</CardDescription>
+            <CardDescription>Dodajte nove vadbe ali uredite obstoječe. Spremembe urnika zahtevajo ponovno odobritev.</CardDescription>
           </div>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
@@ -217,7 +218,9 @@ export default function ClassManagement() {
               <DialogHeader>
                 <DialogTitle>{editingClass ? "Uredi vadbo" : "Nova vadba"}</DialogTitle>
                 <DialogDescription>
-                  {editingClass ? "Posodobite podatke o vadbi" : "Dodajte novo skupinsko vadbo"}
+                  {editingClass 
+                    ? "Posodobite podatke o vadbi. Spremembe urnika bodo zahtevale ponovno odobritev administratorja." 
+                    : "Dodajte novo skupinsko vadbo. Vadba bo poslana v pregled administratorju."}
                 </DialogDescription>
               </DialogHeader>
 
@@ -378,10 +381,21 @@ export default function ClassManagement() {
             {classes.map((classData) => (
               <div key={classData._id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
                 <div className="flex items-start justify-between mb-3">
-                  <div>
+                  <div className="flex-1">
                     <h3 className="font-semibold text-lg">{classData.name}</h3>
                     {classData.description && (
                       <p className="text-sm text-gray-600 mt-1">{classData.description}</p>
+                    )}
+                    {classData.status === "pending" && (
+                      <p className="text-xs text-orange-600 mt-2 flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        Ta vadba čaka na odobritev administratorja
+                      </p>
+                    )}
+                    {classData.status === "rejected" && (
+                      <p className="text-xs text-red-600 mt-2">
+                        ❌ Vadba zavrnjena - prosimo, uredite in ponovno pošljite
+                      </p>
                     )}
                   </div>
                   <div className="flex gap-1">

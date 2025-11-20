@@ -174,12 +174,16 @@ export async function sendNewClassNotificationToAdmin(classData: {
     .map(slot => `${daysOfWeek[slot.dayOfWeek]} ${slot.startTime} - ${slot.endTime}`)
     .join("\n");
 
-  const subject = `Nova skupinska vadba zahteva odobritev: ${classData.className}`;
+  const isUpdate = classData.className.includes("(POSODOBLJENA)");
+  const cleanClassName = classData.className.replace(" (POSODOBLJENA)", "");
+
+  const subject = `${isUpdate ? "Posodobljena" : "Nova"} skupinska vadba zahteva odobritev: ${cleanClassName}`;
   
   const text = `
-Nova skupinska vadba čaka na odobritev
+${isUpdate ? "Posodobljena" : "Nova"} skupinska vadba čaka na odobritev
 
-Ime vadbe: ${classData.className}
+Ime vadbe: ${cleanClassName}
+${isUpdate ? "STATUS: Posodobljena - potrebna ponovna odobritev" : ""}
 Trener: ${classData.trainerName} (${classData.trainerEmail})
 Opis: ${classData.description || "Ni opisa"}
 Kapaciteta: ${classData.capacity || "Ni določena"} udeležencev
@@ -208,16 +212,17 @@ Prijavite se v admin nadzorno ploščo za pregled in odobritev vadbe.
 <body>
   <div class="container">
     <div class="header">
-      <h1>⚠️ Nova vadba čaka na odobritev</h1>
+      <h1>${isUpdate ? '🔄 Posodobljena vadba čaka na odobritev' : '⚠️ Nova vadba čaka na odobritev'}</h1>
     </div>
     <div class="content">
-      <p>Trener je ustvaril novo skupinsko vadbo, ki čaka na vašo odobritev.</p>
+      ${isUpdate ? '<p><strong style="color: #f5576c;">⚠️ Ta vadba je bila posodobljena in potrebuje ponovno odobritev.</strong></p>' : ''}
+      <p>Trener je ${isUpdate ? 'posodobil' : 'ustvaril'} skupinsko vadbo, ki čaka na vašo odobritev.</p>
       
       <h3>Podrobnosti vadbe:</h3>
       
       <div class="detail">
         <div class="detail-label">📋 Ime vadbe:</div>
-        <div>${classData.className}</div>
+        <div>${cleanClassName}</div>
       </div>
       
       <div class="detail">

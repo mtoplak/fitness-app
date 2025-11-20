@@ -4,9 +4,40 @@ import { Booking } from "../models/Booking.js";
 import { User } from "../models/User.js";
 import { Notification } from "../models/Notification.js";
 import { authenticateJwt, AuthRequest } from "../middleware/auth.js";
-import { sendNewClassNotificationToAdmin } from "../services/emailService.js";
+import { sendNewClassNotificationToAdmin, sendClassStatusNotificationToTrainer } from "../services/emailService.js";
 
 const router = Router();
+
+// Helper funkcija za preverjanje prekrivanja urnikov
+function checkScheduleOverlap(
+  schedule1: Array<{ dayOfWeek: number; startTime: string; endTime: string }>,
+  schedule2: Array<{ dayOfWeek: number; startTime: string; endTime: string }>
+): boolean {
+  for (const slot1 of schedule1) {
+    for (const slot2 of schedule2) {
+      // Preveri če je isti dan
+      if (slot1.dayOfWeek === slot2.dayOfWeek) {
+        // Pretvori čase v minute
+        const start1 = timeToMinutes(slot1.startTime);
+        const end1 = timeToMinutes(slot1.endTime);
+        const start2 = timeToMinutes(slot2.startTime);
+        const end2 = timeToMinutes(slot2.endTime);
+        
+        // Preveri prekrivanje: slot1 se začne pred koncem slot2 IN slot1 se konča po začetku slot2
+        if (start1 < end2 && end1 > start2) {
+          return true; // Prekrivanje najdeno
+        }
+      }
+    }
+  }
+  return false;
+}
+
+// Helper za pretvorbo časa HH:mm v minute
+function timeToMinutes(time: string): number {
+  const [hours, minutes] = time.split(':').map(Number);
+  return hours * 60 + minutes;
+}
 
 // GET /classes -> list all group classes with trainer info
 router.get("/", async (req, res) => {
@@ -300,6 +331,20 @@ router.post("/create", authenticateJwt, async (req: AuthRequest, res) => {
       return res.status(400).json({ message: "Ime vadbe in urnik sta obvezna" });
     }
 
+    // Preveri prekrivanje urnikov z drugimi vadbami tega trenerja
+    const trainerClasses = await GroupClass.find({
+      trainerUserId: user._id,
+      status: { $in: ["pending", "approved"] } // samo aktivne/pending vadbe
+    });
+
+    for (const existingClass of trainerClasses) {
+      if (checkScheduleOverlap(schedule, existingClass.schedule)) {
+        return res.status(400).json({ 
+          message: `Urnik se prekriva z vadbo "${existingClass.name}". Prosimo, izberite drug termin.` 
+        });
+      }
+    }
+
     const newClass = await GroupClass.create({
       name,
       description: description || "",
@@ -361,20 +406,66 @@ router.put("/:id/update", authenticateJwt, async (req: AuthRequest, res) => {
 
     const { name, description, difficulty, duration, capacity, schedule } = req.body;
 
+    if (!name || !schedule || schedule.length === 0) {
+      return res.status(400).json({ message: "Ime vadbe in urnik sta obvezna" });
+    }
+
+    // Preveri prekrivanje urnikov z drugimi vadbami tega trenerja
+    const trainerClasses = await GroupClass.find({
+      trainerUserId: user._id,
+      _id: { $ne: id }, // izključi trenutno vadbo
+      status: { $in: ["pending", "approved"] } // samo aktivne/pending vadbe
+    });
+
+    for (const existingClass of trainerClasses) {
+      if (checkScheduleOverlap(schedule, existingClass.schedule)) {
+        return res.status(400).json({ 
+          message: `Urnik se prekriva z vadbo "${existingClass.name}". Prosimo, izberite drug termin.` 
+        });
+      }
+    }
+
+    const previousStatus = groupClass.status;
+
     // Posodobi polja
     if (name) groupClass.name = name;
     if (description !== undefined) groupClass.description = description;
     if (difficulty) groupClass.difficulty = difficulty;
     if (duration) groupClass.duration = duration;
     if (capacity) groupClass.capacity = capacity;
-    if (schedule) groupClass.schedule = schedule;
+    if (schedule) {
+      groupClass.schedule = schedule;
+      // Če je bila vadba odobrena in se spremeni urnik, zahteva ponovno odobritev
+      if (previousStatus === "approved") {
+        groupClass.status = "pending";
+      }
+    }
 
     await groupClass.save();
 
     console.log("Vadba posodobljena:", groupClass._id);
 
+    // Če je status spremenjen na pending, pošlji email adminu
+    if (previousStatus === "approved" && groupClass.status === "pending") {
+      try {
+        await sendNewClassNotificationToAdmin({
+          className: `${name} (POSODOBLJENA)`,
+          trainerName: user.fullName,
+          trainerEmail: user.email,
+          description: description || "",
+          capacity: capacity || 20,
+          schedule
+        });
+        console.log("Email obvestilo poslano adminu o posodobitvi vadbe");
+      } catch (emailErr) {
+        console.error("Napaka pri pošiljanju emaila:", emailErr);
+      }
+    }
+
     return res.json({
-      message: "Vadba uspešno posodobljena",
+      message: groupClass.status === "pending" 
+        ? "Vadba posodobljena in poslana v pregled administratorju"
+        : "Vadba uspešno posodobljena",
       class: groupClass
     });
   } catch (err) {
