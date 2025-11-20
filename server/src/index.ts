@@ -10,6 +10,7 @@ import profileRoutes from "./routes/profile.js";
 import membershipsRoutes from "./routes/memberships.js";
 import trainersRoutes from "./routes/trainers.js";
 import adminRoutes from "./routes/admin.js";
+import reportsRoutes from "./routes/reports.js";
 import { startReminderJob } from "./jobs/reminderJob.js";
 
 async function bootstrap() {
@@ -30,6 +31,7 @@ async function bootstrap() {
   app.use("/memberships", membershipsRoutes);
   app.use("/trainers", trainersRoutes);
   app.use("/admin", adminRoutes);
+  app.use("/reports", reportsRoutes);
 
   app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
     // Fallback error handler

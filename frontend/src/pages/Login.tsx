@@ -17,7 +17,13 @@ export default function Login() {
     setError(null);
     setLoading(true);
     try {
-      await login(email, password);
+      const user = await login(email, password);
+      
+      // Preveri, če je admin - preusmeri na dashboard
+      if (user.role === "admin") {
+        navigate("/dashboard", { replace: true });
+        return;
+      }
       
       // Preveri, če je bil shranjen selectedPackage iz homepage
       const savedPackageId = localStorage.getItem("selectedPackage");

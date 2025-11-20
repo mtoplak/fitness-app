@@ -6,7 +6,7 @@ type User = { id: string; email: string; firstName?: string; lastName?: string; 
 type AuthContextValue = {
   user: User;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<{ id: string; email: string; firstName?: string; lastName?: string; fullName: string; address?: string; role: "admin" | "trainer" | "member" }>;
   register: (data: { email: string; password: string; firstName: string; lastName: string; address?: string; role?: "admin" | "trainer" | "member" }) => Promise<void>;
   logout: () => void;
 };
@@ -36,7 +36,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   async function login(email: string, password: string) {
     const res = await api.login({ email, password });
     localStorage.setItem("auth_token", res.token);
-    setUser(res.user as User);
+    const userData = res.user as User;
+    setUser(userData);
+    return userData!;
   }
 
   async function register(data: { email: string; password: string; firstName: string; lastName: string; address?: string; role?: "admin" | "trainer" | "member" }) {
