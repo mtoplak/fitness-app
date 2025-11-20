@@ -2,9 +2,10 @@ import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, BarChart3 } from "lucide-react";
+import { Users, BarChart3, Calendar } from "lucide-react";
 import AdminMembers from "./AdminMembers";
 import AdminReports from "./AdminReports";
+import AdminClasses from "./AdminClasses";
 
 export default function AdminDashboard() {
   const { user, logout } = useAuth();
@@ -21,10 +22,14 @@ export default function AdminDashboard() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full max-w-md grid-cols-2">
+          <TabsList className="grid w-full max-w-3xl grid-cols-3">
             <TabsTrigger value="members" className="flex items-center gap-2">
               <Users className="h-4 w-4" />
               Člani
+            </TabsTrigger>
+            <TabsTrigger value="classes" className="flex items-center gap-2">
+              <Calendar className="h-4 w-4" />
+              Vadbe
             </TabsTrigger>
             <TabsTrigger value="reports" className="flex items-center gap-2">
               <BarChart3 className="h-4 w-4" />
@@ -34,6 +39,10 @@ export default function AdminDashboard() {
 
           <TabsContent value="members">
             <AdminMembers />
+          </TabsContent>
+
+          <TabsContent value="classes">
+            <AdminClasses />
           </TabsContent>
 
           <TabsContent value="reports">

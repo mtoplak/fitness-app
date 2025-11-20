@@ -156,3 +156,190 @@ WiiFit ekipa
     html,
   });
 }
+
+/**
+ * Pošlje obvestilo adminu o novi skupinski vadbi
+ */
+export async function sendNewClassNotificationToAdmin(classData: {
+  className: string;
+  trainerName: string;
+  trainerEmail: string;
+  description?: string;
+  capacity?: number;
+  schedule: Array<{ dayOfWeek: number; startTime: string; endTime: string }>;
+}): Promise<void> {
+  const daysOfWeek = ["Nedelja", "Ponedeljek", "Torek", "Sreda", "Četrtek", "Petek", "Sobota"];
+  
+  const scheduleText = classData.schedule
+    .map(slot => `${daysOfWeek[slot.dayOfWeek]} ${slot.startTime} - ${slot.endTime}`)
+    .join("\n");
+
+  const subject = `Nova skupinska vadba zahteva odobritev: ${classData.className}`;
+  
+  const text = `
+Nova skupinska vadba čaka na odobritev
+
+Ime vadbe: ${classData.className}
+Trener: ${classData.trainerName} (${classData.trainerEmail})
+Opis: ${classData.description || "Ni opisa"}
+Kapaciteta: ${classData.capacity || "Ni določena"} udeležencev
+
+Urnik:
+${scheduleText}
+
+Prijavite se v admin nadzorno ploščo za pregled in odobritev vadbe.
+  `.trim();
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+    .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+    .detail { background: white; padding: 15px; margin: 10px 0; border-left: 4px solid #f5576c; }
+    .detail-label { font-weight: bold; color: #f5576c; }
+    .schedule { background: white; padding: 15px; margin: 10px 0; font-family: monospace; white-space: pre-line; }
+    .btn { display: inline-block; padding: 12px 24px; background: #f5576c; color: white; text-decoration: none; border-radius: 5px; margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>⚠️ Nova vadba čaka na odobritev</h1>
+    </div>
+    <div class="content">
+      <p>Trener je ustvaril novo skupinsko vadbo, ki čaka na vašo odobritev.</p>
+      
+      <h3>Podrobnosti vadbe:</h3>
+      
+      <div class="detail">
+        <div class="detail-label">📋 Ime vadbe:</div>
+        <div>${classData.className}</div>
+      </div>
+      
+      <div class="detail">
+        <div class="detail-label">👤 Trener:</div>
+        <div>${classData.trainerName} (${classData.trainerEmail})</div>
+      </div>
+      
+      <div class="detail">
+        <div class="detail-label">📝 Opis:</div>
+        <div>${classData.description || "Ni opisa"}</div>
+      </div>
+      
+      <div class="detail">
+        <div class="detail-label">👥 Kapaciteta:</div>
+        <div>${classData.capacity || "Ni določena"} udeležencev</div>
+      </div>
+      
+      <h3>Urnik:</h3>
+      <div class="schedule">${scheduleText}</div>
+      
+      <p style="text-align: center;">
+        <a href="${env.clientOrigin}/dashboard" class="btn">Pojdi na nadzorno ploščo</a>
+      </p>
+    </div>
+  </div>
+</body>
+</html>
+  `.trim();
+
+  await sendEmail({
+    to: "admin@wiifit.si",
+    subject,
+    text,
+    html,
+  });
+}
+
+/**
+ * Pošlje obvestilo trenerju o statusu vadbe
+ */
+export async function sendClassStatusNotificationToTrainer(
+  trainerEmail: string,
+  classData: {
+    className: string;
+    status: "approved" | "rejected";
+    adminComment?: string;
+  }
+): Promise<void> {
+  const isApproved = classData.status === "approved";
+  
+  const subject = `Vadba ${classData.className} - ${isApproved ? "Odobrena" : "Zavrnjena"}`;
+  
+  const text = `
+Vaša skupinska vadba je bila ${isApproved ? "odobrena" : "zavrnjena"}
+
+Ime vadbe: ${classData.className}
+Status: ${isApproved ? "Odobrena" : "Zavrnjena"}
+${classData.adminComment ? `Komentar: ${classData.adminComment}` : ""}
+
+${isApproved 
+  ? "Čestitamo! Vaša vadba je zdaj vidna članom in je na voljo za rezervacije." 
+  : "Prosimo, preglejte podrobnosti vadbe in jo po potrebi uredite ter ponovno pošljite na odobritev."
+}
+  `.trim();
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: ${isApproved ? 'linear-gradient(135deg, #00b09b 0%, #96c93d 100%)' : 'linear-gradient(135deg, #e53935 0%, #e35d5b 100%)'}; color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+    .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+    .detail { background: white; padding: 15px; margin: 10px 0; border-left: 4px solid ${isApproved ? '#96c93d' : '#e35d5b'}; }
+    .detail-label { font-weight: bold; color: ${isApproved ? '#96c93d' : '#e35d5b'}; }
+    .btn { display: inline-block; padding: 12px 24px; background: ${isApproved ? '#96c93d' : '#e35d5b'}; color: white; text-decoration: none; border-radius: 5px; margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>${isApproved ? '✅ Vadba odobrena' : '❌ Vadba zavrnjena'}</h1>
+    </div>
+    <div class="content">
+      <div class="detail">
+        <div class="detail-label">📋 Ime vadbe:</div>
+        <div>${classData.className}</div>
+      </div>
+      
+      <div class="detail">
+        <div class="detail-label">Status:</div>
+        <div><strong>${isApproved ? '✅ Odobrena' : '❌ Zavrnjena'}</strong></div>
+      </div>
+      
+      ${classData.adminComment ? `
+      <div class="detail">
+        <div class="detail-label">💬 Komentar administratorja:</div>
+        <div>${classData.adminComment}</div>
+      </div>
+      ` : ''}
+      
+      <p>
+        ${isApproved 
+          ? 'Čestitamo! Vaša vadba je zdaj vidna članom in je na voljo za rezervacije.' 
+          : 'Prosimo, preglejte podrobnosti vadbe in jo po potrebi uredite ter ponovno pošljite na odobritev.'
+        }
+      </p>
+      
+      <p style="text-align: center;">
+        <a href="${env.clientOrigin}/dashboard" class="btn">Pojdi na nadzorno ploščo</a>
+      </p>
+    </div>
+  </div>
+</body>
+</html>
+  `.trim();
+
+  await sendEmail({
+    to: trainerEmail,
+    subject,
+    text,
+    html,
+  });
+}

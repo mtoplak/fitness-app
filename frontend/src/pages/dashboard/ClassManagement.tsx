@@ -18,6 +18,7 @@ interface GroupClass {
   difficulty?: "easy" | "medium" | "hard";
   duration?: number;
   capacity?: number;
+  status?: "pending" | "approved" | "rejected";
   schedule: Array<{
     dayOfWeek: number;
     startTime: string;
@@ -52,6 +53,7 @@ export default function ClassManagement() {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingClass, setEditingClass] = useState<GroupClass | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   // Form state
   const [formName, setFormName] = useState("");
@@ -114,6 +116,9 @@ export default function ClassManagement() {
       return;
     }
 
+    if (submitting) return; // Prepreči dvojni submit
+
+    setSubmitting(true);
     try {
       if (editingClass) {
         await api.updateClass(editingClass._id, {
@@ -139,7 +144,7 @@ export default function ClassManagement() {
         });
         toast({
           title: "Uspešno ustvarjeno",
-          description: "Nova vadba je bila uspešno ustvarjena"
+          description: "Nova vadba poslana na odobritev administratorju"
         });
       }
       
@@ -152,6 +157,8 @@ export default function ClassManagement() {
         description: message,
         variant: "destructive"
       });
+    } finally {
+      setSubmitting(false);
     }
   }
 
@@ -336,11 +343,18 @@ export default function ClassManagement() {
                 </div>
 
                 <div className="flex justify-end gap-2 pt-4">
-                  <Button variant="outline" onClick={() => setDialogOpen(false)}>
+                  <Button variant="outline" onClick={() => setDialogOpen(false)} disabled={submitting}>
                     Prekliči
                   </Button>
-                  <Button onClick={handleSubmit} className="bg-purple-600 hover:bg-purple-700">
-                    {editingClass ? "Posodobi" : "Ustvari"}
+                  <Button onClick={handleSubmit} className="bg-purple-600 hover:bg-purple-700" disabled={submitting}>
+                    {submitting ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        {editingClass ? "Posodabljanje..." : "Ustvarjanje..."}
+                      </>
+                    ) : (
+                      editingClass ? "Posodobi" : "Ustvari"
+                    )}
                   </Button>
                 </div>
               </div>
@@ -389,6 +403,15 @@ export default function ClassManagement() {
                 </div>
 
                 <div className="flex flex-wrap gap-2 mb-3">
+                  {classData.status && (
+                    <Badge 
+                      variant={classData.status === "approved" ? "default" : classData.status === "pending" ? "secondary" : "destructive"}
+                    >
+                      {classData.status === "pending" && "⏳ Čaka na odobritev"}
+                      {classData.status === "approved" && "✅ Odobrena"}
+                      {classData.status === "rejected" && "❌ Zavrnjena"}
+                    </Badge>
+                  )}
                   {classData.difficulty && (
                     <Badge className={difficultyColors[classData.difficulty]}>
                       <TrendingUp className="h-3 w-3 mr-1" />

@@ -14,6 +14,7 @@ export interface GroupClassDocument extends Document {
   schedule: WeeklyTimeSlot[]; // weekly recurrence pattern
   trainerUserId?: Types.ObjectId; // optional primary trainer
   capacity?: number;
+  status: "pending" | "approved" | "rejected"; // status za admin odobritev
   createdAt: Date;
   updatedAt: Date;
 }
@@ -35,7 +36,8 @@ const groupClassSchema = new Schema<GroupClassDocument>(
     duration: { type: Number, min: 1 }, // v minutah
     schedule: { type: [timeSlotSchema], default: [] },
     trainerUserId: { type: Schema.Types.ObjectId, ref: "User" },
-    capacity: { type: Number, min: 1 }
+    capacity: { type: Number, min: 1 },
+    status: { type: String, enum: ["pending", "approved", "rejected"], default: "pending" }
   },
   { timestamps: true }
 );

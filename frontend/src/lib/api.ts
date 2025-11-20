@@ -422,6 +422,23 @@ export const api = {
   // Admin endpoints - generic GET for flexible usage
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   get: (path: string) => request<any>(path),
+  
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  post: (path: string, data?: any) => request<any>(path, {
+    method: "POST",
+    body: data ? JSON.stringify(data) : undefined
+  }),
+  
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  put: (path: string, data?: any) => request<any>(path, {
+    method: "PUT",
+    body: data ? JSON.stringify(data) : undefined
+  }),
+  
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  delete: (path: string) => request<any>(path, {
+    method: "DELETE"
+  }),
 };
 
 

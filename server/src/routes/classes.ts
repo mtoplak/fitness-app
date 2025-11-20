@@ -4,13 +4,17 @@ import { Booking } from "../models/Booking.js";
 import { User } from "../models/User.js";
 import { Notification } from "../models/Notification.js";
 import { authenticateJwt, AuthRequest } from "../middleware/auth.js";
+import { sendNewClassNotificationToAdmin } from "../services/emailService.js";
 
 const router = Router();
 
 // GET /classes -> list all group classes with trainer info
-router.get("/", async (_req, res) => {
+router.get("/", async (req, res) => {
   try {
-    const classes = await GroupClass.find({})
+    // Prikaži samo odobrene vadbe (javni API brez authentikacije)
+    const filter = { status: "approved" };
+    
+    const classes = await GroupClass.find(filter)
       .populate("trainerUserId", "firstName lastName fullName email")
       .lean();
     return res.json(classes);
@@ -303,13 +307,30 @@ router.post("/create", authenticateJwt, async (req: AuthRequest, res) => {
       duration: duration || 60,
       capacity: capacity || 20,
       schedule,
-      trainerUserId: user._id
+      trainerUserId: user._id,
+      status: "pending" // nova vadba mora biti odobrena
     });
 
     console.log("Nova vadba ustvarjena:", newClass._id);
 
+    // Pošlji email obvestilo adminu
+    try {
+      await sendNewClassNotificationToAdmin({
+        className: name,
+        trainerName: user.fullName,
+        trainerEmail: user.email,
+        description,
+        capacity: capacity || 20,
+        schedule
+      });
+      console.log("Email obvestilo poslano adminu");
+    } catch (emailErr) {
+      console.error("Napaka pri pošiljanju emaila:", emailErr);
+      // Nadaljuj tudi če email ne uspe
+    }
+
     return res.status(201).json({
-      message: "Vadba uspešno ustvarjena",
+      message: "Vadba uspešno ustvarjena in poslana v pregled",
       class: newClass
     });
   } catch (err) {

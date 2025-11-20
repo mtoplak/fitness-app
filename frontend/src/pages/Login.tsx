@@ -19,8 +19,8 @@ export default function Login() {
     try {
       const user = await login(email, password);
       
-      // Preveri, če je admin - preusmeri na dashboard
-      if (user.role === "admin") {
+      // Preveri, če je admin ali trener - preusmeri na dashboard
+      if (user.role === "admin" || user.role === "trainer") {
         navigate("/dashboard", { replace: true });
         return;
       }
