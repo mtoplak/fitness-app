@@ -115,11 +115,9 @@ export default function PersonalTrainingPage() {
         description: `Osebni trening z ${selectedTrainer.fullName} je bil uspešno rezerviran.`
       });
 
-      // Počisti izbiro
       setSelectedSlot(null);
       setNotes("");
       
-      // Ponovno naloži razpoložljivost
       if (selectedDate) {
         const dateStr = formatDateToYYYYMMDD(selectedDate);
         const data = await api.getTrainerAvailability(selectedTrainer.id, dateStr);

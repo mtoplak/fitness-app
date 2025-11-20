@@ -173,10 +173,8 @@ export default function Profile() {
         description: "Rezervacija je bila preklicana",
       });
 
-      // Ponovno naloži rezervacije
       await loadBookings();
       
-      // Zapri dialoge
       setIsCancelDialogOpen(false);
       setIsDialogOpen(false);
       setBookingToCancel(null);

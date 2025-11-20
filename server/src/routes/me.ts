@@ -18,4 +18,3 @@ router.get("/me", authenticateJwt, (req: AuthRequest, res) => {
 
 export default router;
 
-

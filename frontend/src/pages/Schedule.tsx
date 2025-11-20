@@ -36,7 +36,6 @@ type GroupClass = {
 };
 
 const dayNames = ["Pon", "Tor", "Sre", "Čet", "Pet", "Sob", "Ned"];
-// Array z imeni dni kjer index ustreza Date.getDay() (0=Nedelja, 1=Ponedeljek, ...)
 const dayNamesFullByGetDay = ["Nedelja", "Ponedeljek", "Torek", "Sreda", "Četrtek", "Petek", "Sobota"];
 
 function toMinutes(t: string): number {
@@ -60,16 +59,13 @@ function getStartOfWeek(date: Date): Date {
   return monday;
 }
 
-// Get date for specific day of week in a given week
 function getDateForDayInWeek(weekStart: Date, dayOfWeek: number): Date {
   const date = new Date(weekStart);
-  // dayOfWeek: 0=Sun, 1=Mon, etc. but weekStart is Monday
-  const offset = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Sunday is at the end
+  const offset = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
   date.setDate(date.getDate() + offset);
   return date;
 }
 
-// Check if a date is in the past (before today)
 function isDatePast(date: Date): boolean {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -78,7 +74,6 @@ function isDatePast(date: Date): boolean {
   return checkDate < today;
 }
 
-// Check if a date is today
 function isDateToday(date: Date): boolean {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -87,7 +82,6 @@ function isDateToday(date: Date): boolean {
   return checkDate.getTime() === today.getTime();
 }
 
-// Helper funkcija za formatiranje datuma v YYYY-MM-DD (lokalni čas)
 function formatDateToYYYYMMDD(date: Date): string {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -231,9 +225,9 @@ export default function Schedule() {
   };
 
   const timetable = useMemo(() => {
-    const startOfDay = 6 * 60; // 06:00
-    const endOfDay = 22 * 60;  // 22:00
-    const step = 30; // minutes
+    const startOfDay = 6 * 60;
+    const endOfDay = 22 * 60;
+    const step = 30;
     const rows: number[] = [];
     for (let m = startOfDay; m <= endOfDay; m += step) rows.push(m);
 
@@ -504,5 +498,4 @@ export default function Schedule() {
     </section>
   );
 }
-
 

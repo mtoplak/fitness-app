@@ -1,7 +1,6 @@
 import nodemailer from "nodemailer";
 import { env } from "../config/env.js";
 
-// Ustvari transporter za pošiljanje emailov
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
@@ -23,7 +22,6 @@ export interface EmailOptions {
  */
 export async function sendEmail(options: EmailOptions): Promise<void> {
   try {
-    // Za testiranje vedno pošljemo na testni email
     const actualRecipient = env.emailTestRecipient;
     
     console.log(`📧 Sending email to ${actualRecipient} (original recipient: ${options.to})`);

@@ -48,5 +48,3 @@ export const MembershipPackage: Model<MembershipPackageDocument> =
 export const Membership: Model<MembershipDocument> =
   mongoose.models.Membership || mongoose.model<MembershipDocument>("Membership", membershipSchema);
 
-
-

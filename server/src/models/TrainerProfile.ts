@@ -24,4 +24,3 @@ const trainerProfileSchema = new Schema<TrainerProfileDocument>(
 export const TrainerProfile: Model<TrainerProfileDocument> =
   mongoose.models.TrainerProfile || mongoose.model<TrainerProfileDocument>("TrainerProfile", trainerProfileSchema);
 
-

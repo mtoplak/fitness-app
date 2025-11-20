@@ -14,14 +14,11 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import {
-  TrendingUp,
-  TrendingDown,
   DollarSign,
   Users,
   Calendar,
   Activity,
   RefreshCw,
-  Download
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {

@@ -40,4 +40,3 @@ notificationSchema.index({ status: 1, scheduledFor: 1 });
 export const Notification: Model<NotificationDocument> =
   mongoose.models.Notification || mongoose.model<NotificationDocument>("Notification", notificationSchema);
 
-

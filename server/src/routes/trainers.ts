@@ -6,10 +6,8 @@ import { authenticateJwt, AuthRequest } from "../middleware/auth.js";
 
 const router = Router();
 
-// GET /trainers -> seznam vseh trenerjev ki nudijo osebne treninge
 router.get("/", async (_req, res) => {
   try {
-    // Najdi vse trenerje ki nudijo personal training
     const trainerProfiles = await TrainerProfile.find({
       trainerType: { $in: ["personal", "both"] }
     })
@@ -33,8 +31,6 @@ router.get("/", async (_req, res) => {
   }
 });
 
-// GET /trainers/:trainerId/availability -> razpoložljivi termini za izbranega trenerja
-// Query params: date (YYYY-MM-DD) - datum za katerega preverjamo razpoložljivost
 router.get("/:trainerId/availability", async (req, res) => {
   try {
     const { trainerId } = req.params;
@@ -44,7 +40,6 @@ router.get("/:trainerId/availability", async (req, res) => {
       return res.status(400).json({ message: "Datum je obvezen parameter (YYYY-MM-DD)" });
     }
 
-    // Preveri ali trener obstaja in nudi osebne treninge
     const trainer = await User.findById(trainerId);
     if (!trainer || trainer.role !== "trainer") {
       return res.status(404).json({ message: "Trener ni najden" });
@@ -55,13 +50,11 @@ router.get("/:trainerId/availability", async (req, res) => {
       return res.status(404).json({ message: "Trener ne nudi osebnih treningov" });
     }
 
-    // Parsiramo datum
     const [year, month, day] = date.split('-').map(Number);
     const selectedDate = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
     const nextDay = new Date(selectedDate);
     nextDay.setUTCDate(nextDay.getUTCDate() + 1);
 
-    // Pridobi vse potrjene rezervacije trenerja za ta dan
     const existingBookings = await Booking.find({
       trainerId,
       type: "personal_training",
@@ -71,14 +64,12 @@ router.get("/:trainerId/availability", async (req, res) => {
       .sort({ startTime: 1 })
       .lean();
 
-    // Generiraj možne časovne slote (8:00 - 20:00, vsaka ura)
     const availableSlots = [];
     const occupiedSlots = existingBookings.map((booking: any) => ({
       start: new Date(booking.startTime),
       end: new Date(booking.endTime)
     }));
 
-    // Generiraj slote od 8:00 do 20:00 (1 urni intervali)
     for (let hour = 8; hour < 20; hour++) {
       const slotStart = new Date(selectedDate);
       slotStart.setUTCHours(hour, 0, 0, 0);
@@ -88,7 +79,6 @@ router.get("/:trainerId/availability", async (req, res) => {
 
       // Preveri ali je slot zaseden
       const isOccupied = occupiedSlots.some(occupied => {
-        // Slot je zaseden če se prekriva z obstoječo rezervacijo
         return (slotStart < occupied.end && slotEnd > occupied.start);
       });
 
@@ -113,7 +103,6 @@ router.get("/:trainerId/availability", async (req, res) => {
   }
 });
 
-// POST /trainers/:trainerId/book -> rezerviraj osebni trening
 router.post("/:trainerId/book", authenticateJwt, async (req: AuthRequest, res) => {
   try {
     const { trainerId } = req.params;
@@ -121,12 +110,10 @@ router.post("/:trainerId/book", authenticateJwt, async (req: AuthRequest, res) =
     const userId = req.user!._id;
     const user = req.user!;
 
-    // Samo člani lahko rezervirajo
     if (user.role !== "member") {
       return res.status(403).json({ message: "Samo člani lahko rezervirajo osebne treninge" });
     }
 
-    // Validacija podatkov
     if (!startTime || !endTime) {
       return res.status(400).json({ message: "Začetni in končni čas sta obvezna" });
     }
@@ -142,12 +129,10 @@ router.post("/:trainerId/book", authenticateJwt, async (req: AuthRequest, res) =
       return res.status(400).json({ message: "Končni čas mora biti po začetnem času" });
     }
 
-    // Preveri da je v prihodnosti
     if (start < new Date()) {
-      return res.status(400).json({ message: "Ne morete rezervirati v preteklosti" });
+      return res.status(400).json({ message: "Ne morete rezervirati termina v preteklosti" });
     }
 
-    // Preveri ali trener obstaja
     const trainer = await User.findById(trainerId);
     if (!trainer || trainer.role !== "trainer") {
       return res.status(404).json({ message: "Trener ni najden" });
@@ -158,7 +143,6 @@ router.post("/:trainerId/book", authenticateJwt, async (req: AuthRequest, res) =
       return res.status(404).json({ message: "Trener ne nudi osebnih treningov" });
     }
 
-    // Preveri ali ima uporabnik že rezervacijo v tem času
     const userConflict = await Booking.findOne({
       userId,
       type: "personal_training",
@@ -172,7 +156,6 @@ router.post("/:trainerId/book", authenticateJwt, async (req: AuthRequest, res) =
       return res.status(400).json({ message: "Že imate rezervacijo v tem časovnem obdobju" });
     }
 
-    // Preveri ali je trener zaseden v tem času
     const trainerConflict = await Booking.findOne({
       trainerId,
       type: "personal_training",
@@ -186,7 +169,6 @@ router.post("/:trainerId/book", authenticateJwt, async (req: AuthRequest, res) =
       return res.status(400).json({ message: "Trener je v tem času že zaseden" });
     }
 
-    // Ustvari rezervacijo
     const booking = await Booking.create({
       userId,
       type: "personal_training",
@@ -217,26 +199,22 @@ router.post("/:trainerId/book", authenticateJwt, async (req: AuthRequest, res) =
   }
 });
 
-// GET /trainers/my-bookings -> trener vidi svoje rezervacije osebnih treningov
 router.get("/my-bookings", authenticateJwt, async (req: AuthRequest, res) => {
   try {
     const user = req.user!;
 
-    // Samo trenerji lahko vidijo svoje rezervacije
     if (user.role !== "trainer") {
       return res.status(403).json({ message: "Samo trenerji lahko dostopajo do tega endpointa" });
     }
 
     const { upcoming } = req.query;
 
-    // Osnovni query
     const query: any = {
       trainerId: user._id,
       type: "personal_training",
       status: "confirmed"
     };
 
-    // Filtriraj samo prihajajoče
     if (upcoming === "true") {
       query.startTime = { $gte: new Date() };
     }

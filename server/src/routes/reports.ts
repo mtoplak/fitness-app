@@ -6,7 +6,6 @@ import { authenticateJwt, AuthRequest } from "../middleware/auth.js";
 
 const router = Router();
 
-// Middleware za preverjanje admin role
 const requireAdmin = (req: AuthRequest, res: any, next: any) => {
   if (req.user?.role !== "admin") {
     return res.status(403).json({ message: "Dostop zavrnjen - potrebne so admin pravice" });
@@ -14,19 +13,15 @@ const requireAdmin = (req: AuthRequest, res: any, next: any) => {
   next();
 };
 
-// GET /reports/revenue - pregled zaslužka in prihodkov
 router.get("/revenue", authenticateJwt, requireAdmin, async (req: AuthRequest, res) => {
   try {
     const { startDate, endDate } = req.query;
 
-    // Privzeto zadnjih 12 mesecev
     const end = endDate ? new Date(endDate as string) : new Date();
     const start = startDate ? new Date(startDate as string) : new Date(end.getFullYear(), end.getMonth() - 11, 1);
 
-    // Pridobi vse pakete
     const packages = await MembershipPackage.find().lean();
 
-    // Pridobi aktivne članarine v izbranem obdobju
     const memberships = await Membership.find({
       $or: [
         { startDate: { $gte: start, $lte: end } },
@@ -37,7 +32,6 @@ router.get("/revenue", authenticateJwt, requireAdmin, async (req: AuthRequest, r
       .populate("userId", "fullName email")
       .lean();
 
-    // Število naročnin po paketih
     const subscriptionsByPackage = packages.map(pkg => {
       const count = memberships.filter(m => {
         const packageId = (m.packageId as any)?._id?.toString() || m.packageId?.toString();
@@ -52,7 +46,6 @@ router.get("/revenue", authenticateJwt, requireAdmin, async (req: AuthRequest, r
       };
     });
 
-    // Prihodki po mesecih
     const monthlyRevenue = [];
     const currentDate = new Date(start);
     
@@ -82,7 +75,6 @@ router.get("/revenue", authenticateJwt, requireAdmin, async (req: AuthRequest, r
       currentDate.setMonth(currentDate.getMonth() + 1);
     }
 
-    // Skupni prihodki
     const totalRevenue = subscriptionsByPackage.reduce((sum, pkg) => sum + pkg.revenue, 0);
 
     return res.json({
@@ -101,19 +93,15 @@ router.get("/revenue", authenticateJwt, requireAdmin, async (req: AuthRequest, r
   }
 });
 
-// GET /reports/attendance - pregled udeležbe na vadbah
 router.get("/attendance", authenticateJwt, requireAdmin, async (req: AuthRequest, res) => {
   try {
     const { startDate, endDate } = req.query;
 
-    // Privzeto zadnjih 30 dni
     const end = endDate ? new Date(endDate as string) : new Date();
     const start = startDate ? new Date(startDate as string) : new Date(end.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-    // Pridobi vse skupinske vadbe
     const groupClasses = await GroupClass.find().lean();
 
-    // Pridobi vse rezervacije v obdobju
     const bookings = await Booking.find({
       classDate: { $gte: start, $lte: end }
     })
@@ -142,11 +130,9 @@ router.get("/attendance", authenticateJwt, requireAdmin, async (req: AuthRequest
       };
     });
 
-    // Osebni treningi (bookings brez groupClassId)
     const personalTrainingBookings = bookings.filter(b => !b.groupClassId);
     const confirmedPT = personalTrainingBookings.filter(b => b.status !== "cancelled");
 
-    // Udeležba po dnevih
     const dailyAttendance = [];
     const currentDate = new Date(start);
     
@@ -208,7 +194,6 @@ router.get("/attendance", authenticateJwt, requireAdmin, async (req: AuthRequest
   }
 });
 
-// GET /reports/summary - splošen pregled vseh metrik
 router.get("/summary", authenticateJwt, requireAdmin, async (req: AuthRequest, res) => {
   try {
     const { startDate, endDate } = req.query;

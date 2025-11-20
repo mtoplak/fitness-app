@@ -45,4 +45,3 @@ const groupClassSchema = new Schema<GroupClassDocument>(
 export const GroupClass: Model<GroupClassDocument> =
   mongoose.models.GroupClass || mongoose.model<GroupClassDocument>("GroupClass", groupClassSchema);
 
-

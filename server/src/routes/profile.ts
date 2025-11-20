@@ -1,30 +1,26 @@
 import { Router } from "express";
 import { authenticateJwt, AuthRequest } from "../middleware/auth.js";
 import { User } from "../models/User.js";
-import { Membership, MembershipPackage } from "../models/Membership.js";
+import { Membership } from "../models/Membership.js";
 import { Booking } from "../models/Booking.js";
-import { GroupClass } from "../models/GroupClass.js";
 import { Notification } from "../models/Notification.js";
 
 const router = Router();
 
-// GET /profile - pridobi celoten profil uporabnika z naročnino
 router.get("/profile", authenticateJwt, async (req: AuthRequest, res) => {
   try {
     const userId = req.user!._id;
     
-    // Pridobi uporabnika
     const user = await User.findById(userId).select("-passwordHash");
     if (!user) {
       return res.status(404).json({ message: "Uporabnik ni najden" });
     }
 
-    // Pridobi naročnino samo za člane
     let membershipData = null;
     if (user.role === "member" && user.membershipId) {
       const membership = await Membership.findOne({ 
         userId: userId,
-        endDate: { $gte: new Date() } // samo aktivne naročnine
+        endDate: { $gte: new Date() }
       }).populate("packageId");
       
       if (membership) {
@@ -57,32 +53,27 @@ router.get("/profile", authenticateJwt, async (req: AuthRequest, res) => {
   }
 });
 
-// GET /profile/bookings - pridobi vse rezervacije uporabnika (samo za člane)
 router.get("/profile/bookings", authenticateJwt, async (req: AuthRequest, res) => {
   try {
     const userId = req.user!._id;
     const user = req.user!;
     const { status, upcoming } = req.query;
 
-    // Samo člani imajo rezervacije
     if (user.role !== "member") {
       return res.json({ bookings: [] });
     }
 
-    // Pripravi filter
     const filter: any = { userId };
     
     if (status) {
       filter.status = status;
     }
 
-    // Če želimo samo prihajajoče rezervacije
     if (upcoming === "true") {
       const now = new Date();
-      // Nastavi uro na začetek dneva za primerjavo
       now.setHours(0, 0, 0, 0);
       
-      filter.status = "confirmed"; // Samo potrjene rezervacije
+      filter.status = "confirmed";
       filter.$or = [
         { type: "group_class", classDate: { $gte: now } },
         { type: "personal_training", startTime: { $gte: now } }
@@ -140,14 +131,12 @@ router.get("/profile/bookings", authenticateJwt, async (req: AuthRequest, res) =
   }
 });
 
-// GET /profile/bookings/:id - pridobi podrobnosti posamezne rezervacije (samo za člane)
 router.get("/profile/bookings/:id", authenticateJwt, async (req: AuthRequest, res) => {
   try {
     const userId = req.user!._id;
     const user = req.user!;
     const bookingId = req.params.id;
 
-    // Samo člani imajo rezervacije
     if (user.role !== "member") {
       return res.status(404).json({ message: "Rezervacija ni najdena" });
     }
@@ -216,38 +205,32 @@ router.get("/profile/bookings/:id", authenticateJwt, async (req: AuthRequest, re
   }
 });
 
-// DELETE /profile/bookings/:id - prekliči/odjavi rezervacijo (samo za člane)
 router.delete("/profile/bookings/:id", authenticateJwt, async (req: AuthRequest, res) => {
   try {
     const userId = req.user!._id;
     const user = req.user!;
     const bookingId = req.params.id;
 
-    // Samo člani lahko prekličejo svoje rezervacije
     if (user.role !== "member") {
       return res.status(403).json({ message: "Nimate pravice za preklic rezervacij" });
     }
 
-    // Najdi rezervacijo uporabnika
     const booking = await Booking.findOne({ _id: bookingId, userId });
 
     if (!booking) {
       return res.status(404).json({ message: "Rezervacija ni najdena" });
     }
 
-    // Preveri, če je rezervacija že preklicana
     if (booking.status === "cancelled") {
       return res.status(400).json({ message: "Rezervacija je že preklicana" });
     }
 
-    // Preveri, če je termin že minil (samo za skupinske vadbe)
     if (booking.type === "group_class" && booking.classDate) {
       if (booking.classDate < new Date()) {
         return res.status(400).json({ message: "Ne morete preklicati preteklih rezervacij" });
       }
     }
 
-    // Prekliči povezan opomnik (če obstaja)
     try {
       await Notification.updateMany(
         { bookingId: bookingId, status: "pending" },
@@ -255,10 +238,8 @@ router.delete("/profile/bookings/:id", authenticateJwt, async (req: AuthRequest,
       );
     } catch (notifErr) {
       console.error("Napaka pri preklicu opomnika:", notifErr);
-      // Ne blokiraj preklica bookinga
     }
 
-    // Odstrani rezervacijo iz baze
     await Booking.findByIdAndDelete(bookingId);
 
     return res.json({ 

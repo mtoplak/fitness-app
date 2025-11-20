@@ -34,7 +34,6 @@ async function bootstrap() {
   app.use("/reports", reportsRoutes);
 
   app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-    // Fallback error handler
     console.error(err);
     res.status(500).json({ message: "Server error" });
   });
@@ -42,7 +41,6 @@ async function bootstrap() {
   app.listen(env.port, () => {
     console.log(`Server listening on http://localhost:${env.port}`);
     
-    // Zaženi cron job za pošiljanje opomnikov
     startReminderJob();
   });
 }
@@ -51,5 +49,4 @@ bootstrap().catch((err) => {
   console.error("Failed to start server", err);
   process.exit(1);
 });
-
 

@@ -8,7 +8,6 @@ import { sendClassStatusNotificationToTrainer } from "../services/emailService.j
 
 const router = Router();
 
-// Middleware za preverjanje admin role
 const requireAdmin = (req: AuthRequest, res: any, next: any) => {
   if (req.user?.role !== "admin") {
     return res.status(403).json({ message: "Dostop zavrnjen - potrebne so admin pravice" });
@@ -16,10 +15,8 @@ const requireAdmin = (req: AuthRequest, res: any, next: any) => {
   next();
 };
 
-// GET /admin/members - seznam vseh članov s podrobnostmi
 router.get("/members", authenticateJwt, requireAdmin, async (req: AuthRequest, res) => {
   try {
-    // Pridobi vse uporabnike z role 'member' ali 'trainer'
     const members = await User.find({ role: { $in: ["member", "trainer"] } })
       .populate({
         path: "membershipId",
@@ -28,19 +25,15 @@ router.get("/members", authenticateJwt, requireAdmin, async (req: AuthRequest, r
       .lean()
       .sort({ createdAt: -1 });
 
-    // Za vsakega člana pridobi dodatne podatke
     const membersWithDetails = await Promise.all(
       members.map(async (member) => {
-        // Pridobi število rezervacij
         const bookingsCount = await Booking.countDocuments({ userId: member._id });
         
-        // Pridobi število prihodnjih rezervacij
         const upcomingBookings = await Booking.countDocuments({
           userId: member._id,
           classDate: { $gte: new Date() }
         });
 
-        // Pridobi vse članarine (zgodovino)
         const membershipHistory = await Membership.find({ userId: member._id })
           .populate("packageId")
           .sort({ startDate: -1 })
@@ -63,27 +56,24 @@ router.get("/members", authenticateJwt, requireAdmin, async (req: AuthRequest, r
       })
     );
 
-    // Izračunaj statistiko
     const totalMembers = members.length;
     const activeMembers = members.filter(m => {
       const membership = m.membershipId as any;
       return membership && membership.status === "active";
     }).length;
 
-    // Izračunaj povprečno dobo članstva
     const now = new Date();
     const membershipDurations = members
       .filter(m => m.createdAt)
       .map(m => {
         const created = new Date(m.createdAt);
-        return (now.getTime() - created.getTime()) / (1000 * 60 * 60 * 24); // dni
+        return (now.getTime() - created.getTime()) / (1000 * 60 * 60 * 24);
       });
     
     const averageMembershipDays = membershipDurations.length > 0
       ? membershipDurations.reduce((a, b) => a + b, 0) / membershipDurations.length
       : 0;
 
-    // Novi člani v zadnjih 30 dneh
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     const newMembers = members.filter(m => new Date(m.createdAt) >= thirtyDaysAgo).length;
@@ -105,7 +95,6 @@ router.get("/members", authenticateJwt, requireAdmin, async (req: AuthRequest, r
   }
 });
 
-// GET /admin/members/:id - podrobnosti posameznega člana
 router.get("/members/:id", authenticateJwt, requireAdmin, async (req: AuthRequest, res) => {
   try {
     const { id } = req.params;
@@ -121,14 +110,12 @@ router.get("/members/:id", authenticateJwt, requireAdmin, async (req: AuthReques
       return res.status(404).json({ message: "Član ni najden" });
     }
 
-    // Pridobi vse članarine
     const membershipHistory = await Membership.find({ userId: id })
       .populate("packageId")
       .populate("nextPackageId")
       .sort({ startDate: -1 })
       .lean();
 
-    // Pridobi vse rezervacije
     const bookings = await Booking.find({ userId: id })
       .populate("groupClassId", "name")
       .sort({ classDate: -1 })
@@ -160,7 +147,6 @@ router.get("/members/:id", authenticateJwt, requireAdmin, async (req: AuthReques
   }
 });
 
-// GET /admin/classes - seznam vseh skupinskih vadb (vključno s pending)
 router.get("/classes", authenticateJwt, requireAdmin, async (req: AuthRequest, res) => {
   try {
     const classes = await GroupClass.find({})
@@ -168,7 +154,6 @@ router.get("/classes", authenticateJwt, requireAdmin, async (req: AuthRequest, r
       .sort({ createdAt: -1 })
       .lean();
 
-    // Pridobi število rezervacij za vsako vadbo
     const classesWithBookings = await Promise.all(
       classes.map(async (cls) => {
         const bookingsCount = await Booking.countDocuments({ groupClassId: cls._id });
@@ -179,7 +164,6 @@ router.get("/classes", authenticateJwt, requireAdmin, async (req: AuthRequest, r
       })
     );
 
-    // Statistika
     const statistics = {
       totalClasses: classes.length,
       pendingClasses: classes.filter(c => c.status === "pending").length,
@@ -197,7 +181,6 @@ router.get("/classes", authenticateJwt, requireAdmin, async (req: AuthRequest, r
   }
 });
 
-// PUT /admin/classes/:id/approve - odobri skupinsko vadbo
 router.put("/classes/:id/approve", authenticateJwt, requireAdmin, async (req: AuthRequest, res) => {
   try {
     const { id } = req.params;
@@ -211,7 +194,6 @@ router.put("/classes/:id/approve", authenticateJwt, requireAdmin, async (req: Au
     groupClass.status = "approved";
     await groupClass.save();
 
-    // Pošlji email trenerju
     if (groupClass.trainerUserId) {
       const trainer = groupClass.trainerUserId as any;
       try {
@@ -236,7 +218,6 @@ router.put("/classes/:id/approve", authenticateJwt, requireAdmin, async (req: Au
   }
 });
 
-// PUT /admin/classes/:id/reject - zavrni skupinsko vadbo
 router.put("/classes/:id/reject", authenticateJwt, requireAdmin, async (req: AuthRequest, res) => {
   try {
     const { id } = req.params;
@@ -250,7 +231,6 @@ router.put("/classes/:id/reject", authenticateJwt, requireAdmin, async (req: Aut
     groupClass.status = "rejected";
     await groupClass.save();
 
-    // Pošlji email trenerju
     if (groupClass.trainerUserId) {
       const trainer = groupClass.trainerUserId as any;
       try {
@@ -275,7 +255,6 @@ router.put("/classes/:id/reject", authenticateJwt, requireAdmin, async (req: Aut
   }
 });
 
-// PUT /admin/classes/:id - uredi skupinsko vadbo
 router.put("/classes/:id", authenticateJwt, requireAdmin, async (req: AuthRequest, res) => {
   try {
     const { id } = req.params;
@@ -286,7 +265,6 @@ router.put("/classes/:id", authenticateJwt, requireAdmin, async (req: AuthReques
       return res.status(404).json({ message: "Vadba ni najdena" });
     }
 
-    // Posodobi polja
     if (name !== undefined) groupClass.name = name;
     if (description !== undefined) groupClass.description = description;
     if (difficulty !== undefined) groupClass.difficulty = difficulty;
@@ -307,12 +285,10 @@ router.put("/classes/:id", authenticateJwt, requireAdmin, async (req: AuthReques
   }
 });
 
-// DELETE /admin/classes/:id - izbriši skupinsko vadbo
 router.delete("/classes/:id", authenticateJwt, requireAdmin, async (req: AuthRequest, res) => {
   try {
     const { id } = req.params;
 
-    // Preveri, ali obstajajo rezervacije za to vadbo
     const bookingsCount = await Booking.countDocuments({ groupClassId: id });
     
     if (bookingsCount > 0) {

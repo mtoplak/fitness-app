@@ -6,7 +6,6 @@ import { User } from "../models/User.js";
 
 const router = Router();
 
-// GET /memberships/packages - pridobi vse razpoložljive pakete
 router.get("/packages", async (_req, res) => {
   try {
     const packages = await MembershipPackage.find().sort({ price: 1 });
@@ -17,7 +16,6 @@ router.get("/packages", async (_req, res) => {
   }
 });
 
-// GET /memberships/current - pridobi trenutno naročnino
 router.get("/current", authenticateJwt, async (req: AuthRequest, res) => {
   try {
     const userId = req.user!._id;
@@ -69,7 +67,6 @@ router.get("/current", authenticateJwt, async (req: AuthRequest, res) => {
   }
 });
 
-// GET /memberships/history - pridobi zgodovino naročnin
 router.get("/history", authenticateJwt, async (req: AuthRequest, res) => {
   try {
     const userId = req.user!._id;
@@ -108,7 +105,6 @@ router.get("/history", authenticateJwt, async (req: AuthRequest, res) => {
   }
 });
 
-// GET /memberships/payments - pridobi plačila
 router.get("/payments", authenticateJwt, async (req: AuthRequest, res) => {
   try {
     const userId = req.user!._id;
@@ -139,7 +135,6 @@ router.get("/payments", authenticateJwt, async (req: AuthRequest, res) => {
   }
 });
 
-// POST /memberships/subscribe - naroči se na paket
 router.post("/subscribe", authenticateJwt, async (req: AuthRequest, res) => {
   try {
     const userId = req.user!._id;
@@ -154,13 +149,11 @@ router.post("/subscribe", authenticateJwt, async (req: AuthRequest, res) => {
       return res.status(400).json({ message: "Paket je obvezen" });
     }
 
-    // Preveri, če paket obstaja
     const pkg = await MembershipPackage.findById(packageId);
     if (!pkg) {
       return res.status(404).json({ message: "Paket ni najden" });
     }
 
-    // Preveri, če ima uporabnik že aktivno naročnino
     const existingMembership = await Membership.findOne({
       userId,
       status: { $in: ["active", "cancelled"] },
@@ -173,7 +166,6 @@ router.post("/subscribe", authenticateJwt, async (req: AuthRequest, res) => {
       });
     }
 
-    // Ustvari novo naročnino
     const startDate = new Date();
     const endDate = new Date();
     endDate.setMonth(endDate.getMonth() + 1);
@@ -187,7 +179,6 @@ router.post("/subscribe", authenticateJwt, async (req: AuthRequest, res) => {
       status: "active"
     });
 
-    // Ustvari plačilo
     await Payment.create({
       userId,
       membershipId: membership._id,
@@ -211,7 +202,6 @@ router.post("/subscribe", authenticateJwt, async (req: AuthRequest, res) => {
   }
 });
 
-// POST /memberships/change-package - spremeni paket (začne veljati po koncu trenutnega)
 router.post("/change-package", authenticateJwt, async (req: AuthRequest, res) => {
   try {
     const userId = req.user!._id;
@@ -266,7 +256,6 @@ router.post("/change-package", authenticateJwt, async (req: AuthRequest, res) =>
   }
 });
 
-// POST /memberships/cancel - prekliči naročnino (konča se ob poteku)
 router.post("/cancel", authenticateJwt, async (req: AuthRequest, res) => {
   try {
     const userId = req.user!._id;
@@ -306,7 +295,6 @@ router.post("/cancel", authenticateJwt, async (req: AuthRequest, res) => {
   }
 });
 
-// POST /memberships/reactivate - reaktiviraj preklicano naročnino
 router.post("/reactivate", authenticateJwt, async (req: AuthRequest, res) => {
   try {
     const userId = req.user!._id;

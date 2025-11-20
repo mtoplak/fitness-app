@@ -12,4 +12,3 @@ export const env = {
   emailTestRecipient: process.env.EMAIL_TEST_RECIPIENT || ""
 };
 
-

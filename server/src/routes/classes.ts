@@ -8,24 +8,20 @@ import { sendNewClassNotificationToAdmin, sendClassStatusNotificationToTrainer }
 
 const router = Router();
 
-// Helper funkcija za preverjanje prekrivanja urnikov
 function checkScheduleOverlap(
   schedule1: Array<{ dayOfWeek: number; startTime: string; endTime: string }>,
   schedule2: Array<{ dayOfWeek: number; startTime: string; endTime: string }>
 ): boolean {
   for (const slot1 of schedule1) {
     for (const slot2 of schedule2) {
-      // Preveri če je isti dan
       if (slot1.dayOfWeek === slot2.dayOfWeek) {
-        // Pretvori čase v minute
         const start1 = timeToMinutes(slot1.startTime);
         const end1 = timeToMinutes(slot1.endTime);
         const start2 = timeToMinutes(slot2.startTime);
         const end2 = timeToMinutes(slot2.endTime);
         
-        // Preveri prekrivanje: slot1 se začne pred koncem slot2 IN slot1 se konča po začetku slot2
         if (start1 < end2 && end1 > start2) {
-          return true; // Prekrivanje najdeno
+          return true;
         }
       }
     }
@@ -33,16 +29,13 @@ function checkScheduleOverlap(
   return false;
 }
 
-// Helper za pretvorbo časa HH:mm v minute
 function timeToMinutes(time: string): number {
   const [hours, minutes] = time.split(':').map(Number);
   return hours * 60 + minutes;
 }
 
-// GET /classes -> list all group classes with trainer info
 router.get("/", async (req, res) => {
   try {
-    // Prikaži samo odobrene vadbe (javni API brez authentikacije)
     const filter = { status: "approved" };
     
     const classes = await GroupClass.find(filter)
@@ -54,7 +47,6 @@ router.get("/", async (req, res) => {
   }
 });
 
-// GET /classes/:id -> get single class with details
 router.get("/:id", async (req, res) => {
   try {
     const groupClass = await GroupClass.findById(req.params.id)
@@ -70,7 +62,6 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-// GET /classes/:id/availability/:date -> preveri prosta mesta za določen datum
 router.get("/:id/availability/:date", async (req, res) => {
   try {
     const { id, date } = req.params;
@@ -80,17 +71,15 @@ router.get("/:id/availability/:date", async (req, res) => {
       return res.status(404).json({ message: "Vadba ni najdena" });
     }
 
-    // Pretvori datum v Date objekt - uporabi UTC poldne da se izognemo težavam s časovnimi conami
     const [year, month, day] = date.split('-').map(Number);
     const classDate = new Date(Date.UTC(year, month - 1, day, 12, 0, 0, 0));
     const nextDay = new Date(classDate);
     nextDay.setUTCDate(nextDay.getUTCDate() + 1);
 
-    // Preštej obstoječe rezervacije za ta datum
     const bookingsCount = await Booking.countDocuments({
       groupClassId: id,
       classDate: { $gte: classDate, $lt: nextDay },
-      status: { $in: ["confirmed"] } // samo potrjene rezervacije
+      status: { $in: ["confirmed"] }
     });
 
     const capacity = groupClass.capacity || 0;
@@ -108,13 +97,11 @@ router.get("/:id/availability/:date", async (req, res) => {
   }
 });
 
-// GET /classes/:id/participants/:date -> pridobi seznam udeležencev za določen datum
 router.get("/:id/participants/:date", authenticateJwt, async (req: AuthRequest, res) => {
   try {
     const { id, date } = req.params;
     const user = req.user!;
 
-    // Samo trenerji in admini lahko vidijo udeležence
     if (user.role !== "trainer" && user.role !== "admin") {
       return res.status(403).json({ message: "Samo trenerji lahko vidijo udeležence vadbe" });
     }
@@ -124,7 +111,6 @@ router.get("/:id/participants/:date", authenticateJwt, async (req: AuthRequest, 
       return res.status(404).json({ message: "Vadba ni najdena" });
     }
 
-    // Pretvori datum v Date objekt - uporabi UTC poldne da se izognemo težavam s časovnimi conami
     const [year, month, day] = date.split('-').map(Number);
     const classDate = new Date(Date.UTC(year, month - 1, day, 12, 0, 0, 0));
     const nextDay = new Date(classDate);
@@ -132,7 +118,6 @@ router.get("/:id/participants/:date", authenticateJwt, async (req: AuthRequest, 
 
     console.log("Searching for bookings between:", classDate, "and", nextDay);
 
-    // Pridobi vse rezervacije za ta datum z uporabniškimi podatki
     const bookings = await Booking.find({
       groupClassId: id,
       classDate: { $gte: classDate, $lt: nextDay },
@@ -172,7 +157,6 @@ router.get("/:id/participants/:date", authenticateJwt, async (req: AuthRequest, 
   }
 });
 
-// POST /classes/:id/book -> rezerviraj vadbo
 router.post("/:id/book", authenticateJwt, async (req: AuthRequest, res) => {
   try {
     const { id } = req.params;
@@ -180,7 +164,6 @@ router.post("/:id/book", authenticateJwt, async (req: AuthRequest, res) => {
     const userId = req.user!._id;
     const user = req.user!;
 
-    // Samo člani lahko rezervirajo
     if (user.role !== "member") {
       return res.status(403).json({ message: "Samo člani lahko rezervirajo vadbe" });
     }
@@ -191,9 +174,6 @@ router.post("/:id/book", authenticateJwt, async (req: AuthRequest, res) => {
     }
 
     console.log("Received classDate:", classDate, "Type:", typeof classDate);
-
-    // Preveri datum - parsiramo datum kot YYYY-MM-DD
-    // Uporabimo Date.UTC da direktno ustvarimo UTC datum brez pretvorb časovnih con
     let bookingDate: Date;
     
     if (typeof classDate === 'string' && classDate.includes('-')) {
@@ -211,7 +191,6 @@ router.post("/:id/book", authenticateJwt, async (req: AuthRequest, res) => {
     console.log("Parsed booking date (UTC):", bookingDate.toISOString());
     console.log("Looking for bookings between:", bookingDate.toISOString(), "and", nextDay.toISOString());
 
-    // Preveri, ali uporabnik že ima rezervacijo za ta datum in vadbo
     const existingBooking = await Booking.findOne({
       userId,
       groupClassId: id,
@@ -223,7 +202,6 @@ router.post("/:id/book", authenticateJwt, async (req: AuthRequest, res) => {
       return res.status(400).json({ message: "Že imate rezervacijo za to vadbo na ta dan" });
     }
 
-    // Preveri prosta mesta
     const bookingsCount = await Booking.countDocuments({
       groupClassId: id,
       classDate: { $gte: bookingDate, $lt: nextDay },
@@ -239,7 +217,6 @@ router.post("/:id/book", authenticateJwt, async (req: AuthRequest, res) => {
 
     console.log("Creating booking with date:", bookingDate.toISOString());
 
-    // Ustvari rezervacijo
     const booking = await Booking.create({
       userId,
       type: "group_class",
@@ -250,20 +227,17 @@ router.post("/:id/book", authenticateJwt, async (req: AuthRequest, res) => {
 
     console.log("Booking created with classDate:", booking.classDate);
 
-    // Ustvari opomnik (pošlje se 24 ur pred vadbo)
     try {
-      // Najdi ustrezen time slot za ta dan v tednu
       const dayOfWeek = bookingDate.getUTCDay();
       const timeSlot = groupClass.schedule.find(slot => slot.dayOfWeek === dayOfWeek);
       
       if (timeSlot) {
-        // Izračunaj čas pošiljanja (24 ur pred vadbo)
         const [hours, minutes] = timeSlot.startTime.split(':').map(Number);
         const classDateTime = new Date(bookingDate);
         classDateTime.setUTCHours(hours, minutes, 0, 0);
         
         const reminderTime = new Date(classDateTime);
-        reminderTime.setHours(reminderTime.getHours() - 24); // 24 ur prej
+        reminderTime.setHours(reminderTime.getHours() - 24);
 
         await Notification.create({
           userId,
@@ -279,7 +253,6 @@ router.post("/:id/book", authenticateJwt, async (req: AuthRequest, res) => {
       }
     } catch (reminderErr) {
       console.error("Napaka pri ustvarjanju opomnika:", reminderErr);
-      // Ne vrnemo napake, ker je booking uspel
     }
 
     return res.status(201).json({
@@ -296,7 +269,6 @@ router.post("/:id/book", authenticateJwt, async (req: AuthRequest, res) => {
   }
 });
 
-// GET /classes/my-classes/list -> trener pridobi svoje vadbe
 router.get("/my-classes/list", authenticateJwt, async (req: AuthRequest, res) => {
   try {
     const user = req.user!;
@@ -316,7 +288,6 @@ router.get("/my-classes/list", authenticateJwt, async (req: AuthRequest, res) =>
   }
 });
 
-// POST /classes/create -> trener ustvari novo vadbo
 router.post("/create", authenticateJwt, async (req: AuthRequest, res) => {
   try {
     const user = req.user!;
@@ -331,10 +302,9 @@ router.post("/create", authenticateJwt, async (req: AuthRequest, res) => {
       return res.status(400).json({ message: "Ime vadbe in urnik sta obvezna" });
     }
 
-    // Preveri prekrivanje urnikov z drugimi vadbami tega trenerja
     const trainerClasses = await GroupClass.find({
       trainerUserId: user._id,
-      status: { $in: ["pending", "approved"] } // samo aktivne/pending vadbe
+      status: { $in: ["pending", "approved"] }
     });
 
     for (const existingClass of trainerClasses) {
@@ -353,12 +323,11 @@ router.post("/create", authenticateJwt, async (req: AuthRequest, res) => {
       capacity: capacity || 20,
       schedule,
       trainerUserId: user._id,
-      status: "pending" // nova vadba mora biti odobrena
+      status: "pending"
     });
 
     console.log("Nova vadba ustvarjena:", newClass._id);
 
-    // Pošlji email obvestilo adminu
     try {
       await sendNewClassNotificationToAdmin({
         className: name,
@@ -371,7 +340,6 @@ router.post("/create", authenticateJwt, async (req: AuthRequest, res) => {
       console.log("Email obvestilo poslano adminu");
     } catch (emailErr) {
       console.error("Napaka pri pošiljanju emaila:", emailErr);
-      // Nadaljuj tudi če email ne uspe
     }
 
     return res.status(201).json({
@@ -384,7 +352,6 @@ router.post("/create", authenticateJwt, async (req: AuthRequest, res) => {
   }
 });
 
-// PUT /classes/:id/update -> trener posodobi vadbo
 router.put("/:id/update", authenticateJwt, async (req: AuthRequest, res) => {
   try {
     const user = req.user!;
@@ -399,7 +366,6 @@ router.put("/:id/update", authenticateJwt, async (req: AuthRequest, res) => {
       return res.status(404).json({ message: "Vadba ni najdena" });
     }
 
-    // Preveri ali je to vadba tega trenerja
     if (groupClass.trainerUserId?.toString() !== (user._id as any).toString()) {
       return res.status(403).json({ message: "Lahko urejate samo svoje vadbe" });
     }
@@ -410,11 +376,10 @@ router.put("/:id/update", authenticateJwt, async (req: AuthRequest, res) => {
       return res.status(400).json({ message: "Ime vadbe in urnik sta obvezna" });
     }
 
-    // Preveri prekrivanje urnikov z drugimi vadbami tega trenerja
     const trainerClasses = await GroupClass.find({
       trainerUserId: user._id,
-      _id: { $ne: id }, // izključi trenutno vadbo
-      status: { $in: ["pending", "approved"] } // samo aktivne/pending vadbe
+      _id: { $ne: id },
+      status: { $in: ["pending", "approved"] }
     });
 
     for (const existingClass of trainerClasses) {
@@ -427,7 +392,6 @@ router.put("/:id/update", authenticateJwt, async (req: AuthRequest, res) => {
 
     const previousStatus = groupClass.status;
 
-    // Posodobi polja
     if (name) groupClass.name = name;
     if (description !== undefined) groupClass.description = description;
     if (difficulty) groupClass.difficulty = difficulty;
@@ -435,7 +399,6 @@ router.put("/:id/update", authenticateJwt, async (req: AuthRequest, res) => {
     if (capacity) groupClass.capacity = capacity;
     if (schedule) {
       groupClass.schedule = schedule;
-      // Če je bila vadba odobrena in se spremeni urnik, zahteva ponovno odobritev
       if (previousStatus === "approved") {
         groupClass.status = "pending";
       }
@@ -445,7 +408,6 @@ router.put("/:id/update", authenticateJwt, async (req: AuthRequest, res) => {
 
     console.log("Vadba posodobljena:", groupClass._id);
 
-    // Če je status spremenjen na pending, pošlji email adminu
     if (previousStatus === "approved" && groupClass.status === "pending") {
       try {
         await sendNewClassNotificationToAdmin({
@@ -474,7 +436,6 @@ router.put("/:id/update", authenticateJwt, async (req: AuthRequest, res) => {
   }
 });
 
-// DELETE /classes/:id/delete -> trener izbriše vadbo
 router.delete("/:id/delete", authenticateJwt, async (req: AuthRequest, res) => {
   try {
     const user = req.user!;
@@ -489,12 +450,10 @@ router.delete("/:id/delete", authenticateJwt, async (req: AuthRequest, res) => {
       return res.status(404).json({ message: "Vadba ni najdena" });
     }
 
-    // Preveri ali je to vadba tega trenerja
     if (groupClass.trainerUserId?.toString() !== (user._id as any).toString()) {
       return res.status(403).json({ message: "Lahko brišete samo svoje vadbe" });
     }
 
-    // Preveri če ima vadba aktivne rezervacije
     const activeBookings = await Booking.countDocuments({
       groupClassId: id,
       status: "confirmed",

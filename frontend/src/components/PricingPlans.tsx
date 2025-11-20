@@ -63,19 +63,16 @@ const PricingPlans = () => {
   }, []);
 
   const handleSelectPlan = (packageId: string, packageName: string) => {
-    // Če uporabnik ni prijavljen, preusmeri na registracijo
     if (!user) {
       toast({
         title: "Prijava potrebna",
         description: "Za izbiro paketa se morate najprej prijaviti ali registrirati",
       });
-      // Shrani izbrani paket v localStorage za pozneje
       localStorage.setItem("selectedPackage", packageId);
       navigate("/register");
       return;
     }
 
-    // Če uporabnik ni član, ne more kupiti paketa
     if (user.role !== "member") {
       toast({
         title: "Samo za člane",
@@ -85,7 +82,6 @@ const PricingPlans = () => {
       return;
     }
 
-    // Preusmeri na stran za upravljanje naročnine
     localStorage.setItem("selectedPackage", packageId);
     navigate("/membership");
   };
@@ -102,8 +98,8 @@ const PricingPlans = () => {
 
         <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
           {plans.map((plan, index) => {
-            // Najdi paket iz API-ja, ki ustreza imenu
-            const apiPackage = packages.find(p => p.name === plan.name);
+
+          const apiPackage = packages.find(p => p.name === plan.name);
             
             return (
               <Card
