@@ -417,7 +417,11 @@ export const api = {
     message: string;
   }>(`/classes/${id}/delete`, {
     method: "DELETE"
-  })
+  }),
+
+  // Admin endpoints - generic GET for flexible usage
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  get: (path: string) => request<any>(path),
 };
 
 

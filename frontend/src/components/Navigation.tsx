@@ -66,7 +66,7 @@ const Navigation = () => {
                     <Link to="/personal-training"><Button variant="ghost">Osebni trening</Button></Link>
                   </>
                 )}
-                {user.role === "trainer" && (
+                {(user.role === "trainer" || user.role === "admin") && (
                   <Link to="/dashboard"><Button variant="ghost">Dashboard</Button></Link>
                 )}
                 <Button variant="outline" onClick={logout}>Odjava</Button>
@@ -112,7 +112,7 @@ const Navigation = () => {
                       <Link to="/personal-training"><Button variant="ghost" className="w-full">Osebni trening</Button></Link>
                     </>
                   )}
-                  {user.role === "trainer" && (
+                  {(user.role === "trainer" || user.role === "admin") && (
                     <Link to="/dashboard"><Button variant="ghost" className="w-full">Dashboard</Button></Link>
                   )}
                   <Button variant="outline" className="w-full" onClick={() => { setIsMenuOpen(false); logout(); }}>Odjava</Button>

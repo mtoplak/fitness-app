@@ -73,7 +73,9 @@ function getDateForDayInWeek(weekStart: Date, dayOfWeek: number): Date {
 function isDatePast(date: Date): boolean {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  return date < today;
+  const checkDate = new Date(date);
+  checkDate.setHours(0, 0, 0, 0);
+  return checkDate < today;
 }
 
 // Check if a date is today

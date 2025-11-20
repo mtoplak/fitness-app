@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { api } from "@/lib/api";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -16,9 +15,26 @@ import { Badge } from "@/components/ui/badge";
 import { Users, Calendar, Mail, Clock, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
+type WeeklyTimeSlot = {
+  dayOfWeek: number;
+  startTime: string;
+  endTime: string;
+};
+
 type GroupClass = {
   _id: string;
   name: string;
+  capacity?: number;
+  schedule: WeeklyTimeSlot[];
+};
+
+type ClassInstance = {
+  classId: string;
+  className: string;
+  date: string; // YYYY-MM-DD
+  dayOfWeek: number;
+  startTime: string;
+  endTime: string;
   capacity?: number;
 };
 
@@ -45,23 +61,72 @@ type ParticipantsData = {
 
 export default function ClassParticipants() {
   const [classes, setClasses] = useState<GroupClass[]>([]);
-  const [selectedClassId, setSelectedClassId] = useState<string>("");
-  const [selectedDate, setSelectedDate] = useState<string>(() => {
-    // Privzeto današnji datum
-    const today = new Date();
-    return today.toISOString().split('T')[0];
-  });
+  const [classInstances, setClassInstances] = useState<ClassInstance[]>([]);
+  const [selectedInstance, setSelectedInstance] = useState<string>("");
   const [participantsData, setParticipantsData] = useState<ParticipantsData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
+  // Generiraj instance vadb za naslednja 2 tedna
+  const generateClassInstances = (classes: GroupClass[]): ClassInstance[] => {
+    const instances: ClassInstance[] = [];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const twoWeeksFromNow = new Date(today);
+    twoWeeksFromNow.setDate(today.getDate() + 14);
+
+    for (const cls of classes) {
+      for (const slot of cls.schedule || []) {
+        // Najdi vse datume za ta dan v tednu v naslednjih 2 tednih
+        const currentDate = new Date(today);
+        
+        // Pomakni na prvi pojav tega dne v tednu
+        while (currentDate.getDay() !== slot.dayOfWeek) {
+          currentDate.setDate(currentDate.getDate() + 1);
+          if (currentDate > twoWeeksFromNow) break;
+        }
+
+        // Dodaj vse pojave tega termina v naslednjih 2 tednih
+        while (currentDate <= twoWeeksFromNow) {
+          const dateStr = currentDate.toISOString().split('T')[0];
+          instances.push({
+            classId: cls._id,
+            className: cls.name,
+            date: dateStr,
+            dayOfWeek: slot.dayOfWeek,
+            startTime: slot.startTime,
+            endTime: slot.endTime,
+            capacity: cls.capacity
+          });
+          
+          // Pomakni na naslednji teden
+          currentDate.setDate(currentDate.getDate() + 7);
+        }
+      }
+    }
+
+    // Sortiraj po datumu in času
+    instances.sort((a, b) => {
+      if (a.date !== b.date) return a.date.localeCompare(b.date);
+      return a.startTime.localeCompare(b.startTime);
+    });
+
+    return instances;
+  };
+
   const loadClasses = async () => {
     try {
       const data = await api.getClasses();
       setClasses(data as GroupClass[]);
-      if (data.length > 0) {
-        setSelectedClassId(data[0]._id);
+      const instances = generateClassInstances(data as GroupClass[]);
+      setClassInstances(instances);
+      
+      // Avtomatsko izberi prvi termin
+      if (instances.length > 0) {
+        const firstKey = `${instances[0].classId}|${instances[0].date}`;
+        setSelectedInstance(firstKey);
       }
     } catch (err) {
       console.error("Napaka pri nalaganju vadb:", err);
@@ -78,20 +143,31 @@ export default function ClassParticipants() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Avtomatsko naloži udeležence, ko se izbere termin
+  useEffect(() => {
+    if (selectedInstance) {
+      loadParticipants();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedInstance]);
+
   const loadParticipants = async () => {
-    if (!selectedClassId || !selectedDate) {
+    if (!selectedInstance) {
       return;
     }
 
+    const [classId, date] = selectedInstance.split('|');
+    
     setLoading(true);
     setError(null);
 
     try {
-      const data = await api.getClassParticipants(selectedClassId, selectedDate);
+      const data = await api.getClassParticipants(classId, date);
       setParticipantsData(data);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Napaka pri nalaganju udeležencev";
       setError(errorMessage);
+      setParticipantsData(null);
       toast({
         title: "Napaka",
         description: errorMessage,
@@ -102,8 +178,13 @@ export default function ClassParticipants() {
     }
   };
 
-  const handleSearch = () => {
-    loadParticipants();
+  const formatInstanceLabel = (instance: ClassInstance): string => {
+    const date = new Date(instance.date + 'T12:00:00');
+    const dayNames = ['Ned', 'Pon', 'Tor', 'Sre', 'Čet', 'Pet', 'Sob'];
+    const dayName = dayNames[instance.dayOfWeek];
+    const dateStr = date.toLocaleDateString('sl-SI', { day: 'numeric', month: 'numeric' });
+    
+    return `${instance.className} - ${dayName} ${dateStr} ob ${instance.startTime}`;
   };
 
   const formatDate = (dateString: string) => {
@@ -136,52 +217,29 @@ export default function ClassParticipants() {
 
       {/* Filter card */}
       <Card className="p-6">
-        <div className="grid md:grid-cols-3 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="class-select">Izberi vadbo</Label>
-            <Select value={selectedClassId} onValueChange={setSelectedClassId}>
-              <SelectTrigger id="class-select">
-                <SelectValue placeholder="Izberi vadbo" />
-              </SelectTrigger>
-              <SelectContent>
-                {classes.map((cls) => (
-                  <SelectItem key={cls._id} value={cls._id}>
-                    {cls.name} {cls.capacity && `(kapaciteta: ${cls.capacity})`}
+        <div className="space-y-2">
+          <Label htmlFor="class-instance-select">Izberi termin vadbe</Label>
+          <Select value={selectedInstance} onValueChange={setSelectedInstance}>
+            <SelectTrigger id="class-instance-select">
+              <SelectValue placeholder="Izberi termin vadbe" />
+            </SelectTrigger>
+            <SelectContent>
+              {classInstances.map((instance) => {
+                const key = `${instance.classId}|${instance.date}`;
+                return (
+                  <SelectItem key={key} value={key}>
+                    {formatInstanceLabel(instance)}
                   </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="date-input">Datum vadbe</Label>
-            <Input
-              id="date-input"
-              type="date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-            />
-          </div>
-
-          <div className="flex items-end">
-            <Button
-              onClick={handleSearch}
-              disabled={!selectedClassId || !selectedDate || loading}
-              className="w-full"
-            >
-              {loading ? (
-                <>
-                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                  Nalaganje...
-                </>
-              ) : (
-                <>
-                  <Users className="mr-2 h-4 w-4" />
-                  Prikaži udeležence
-                </>
-              )}
-            </Button>
-          </div>
+                );
+              })}
+            </SelectContent>
+          </Select>
+          {loading && (
+            <p className="text-sm text-muted-foreground flex items-center gap-2">
+              <RefreshCw className="h-3 w-3 animate-spin" />
+              Nalaganje udeležencev...
+            </p>
+          )}
         </div>
       </Card>
 
