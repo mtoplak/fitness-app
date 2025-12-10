@@ -5,7 +5,7 @@ dotenv.config();
 export const env = {
   port: process.env.PORT ? Number(process.env.PORT) : 4000,
   mongoUri: process.env.MONGODB_URI,
-  jwtSecret: process.env.JWT_SECRET,
+  jwtSecret: process.env.JWT_SECRET || 'default-secret-key-change-in-production',
   clientOrigin: process.env.CLIENT_ORIGIN || "http://localhost:8080",
   emailUser: process.env.EMAIL_USER || "",
   emailPass: process.env.EMAIL_PASS || "",

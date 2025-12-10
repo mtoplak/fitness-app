@@ -1,0 +1,144 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, pre-production, production ]
+  pull_request:
+    branches: [ main, pre-production, production ]
+
+jobs:
+  # Frontend Testing Job
+  frontend-tests:
+    name: Frontend Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+      
+      - name: Install dependencies
+        working-directory: ./frontend
+        run: npm ci
+      
+      - name: Run tests with coverage
+        working-directory: ./frontend
+        run: npm run test:coverage
+      
+      - name: Upload frontend coverage reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage-report
+          path: frontend/coverage/
+          retention-days: 30
+      
+      - name: Display coverage summary
+        working-directory: ./frontend
+        run: |
+          echo "## Frontend Test Coverage Summary" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          cat coverage/coverage-summary.json || echo "Coverage summary not available"
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+
+  # Backend Testing Job
+  backend-tests:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    
+    services:
+      mongodb:
+        image: mongo:7
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.adminCommand({ping: 1})'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: server/package-lock.json
+      
+      - name: Install dependencies
+        working-directory: ./server
+        run: npm ci
+      
+      - name: Run tests with coverage
+        working-directory: ./server
+        env:
+          MONGODB_URI: mongodb://localhost:27017/fitness-app-test
+          JWT_SECRET: test-secret-key-for-ci
+          NODE_ENV: test
+        run: npm test
+      
+      - name: Upload backend coverage reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage-report
+          path: server/coverage/
+          retention-days: 30
+      
+      - name: Display coverage summary
+        working-directory: ./server
+        run: |
+          echo "## Backend Test Coverage Summary" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          cat coverage/coverage-summary.json || echo "Coverage summary not available"
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+
+  # Combined Coverage Report Job
+  coverage-report:
+    name: Combined Coverage Report
+    needs: [frontend-tests, backend-tests]
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Download frontend coverage
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-coverage-report
+          path: ./coverage/frontend
+      
+      - name: Download backend coverage
+        uses: actions/download-artifact@v4
+        with:
+          name: backend-coverage-report
+          path: ./coverage/backend
+      
+      - name: Display combined coverage info
+        run: |
+          echo "# 📊 Combined Coverage Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Frontend Coverage" >> $GITHUB_STEP_SUMMARY
+          if [ -f ./coverage/frontend/coverage-summary.json ]; then
+            echo "\`\`\`json" >> $GITHUB_STEP_SUMMARY
+            cat ./coverage/frontend/coverage-summary.json >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "Coverage summary not available" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Backend Coverage" >> $GITHUB_STEP_SUMMARY
+          if [ -f ./coverage/backend/coverage-summary.json ]; then
+            echo "\`\`\`json" >> $GITHUB_STEP_SUMMARY
+            cat ./coverage/backend/coverage-summary.json >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "Coverage summary not available" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📁 Coverage reports are available as artifacts in the Actions tab." >> $GITHUB_STEP_SUMMARY
