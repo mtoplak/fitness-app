@@ -41,13 +41,14 @@ jobs:
       - name: Display coverage summary
         working-directory: ./frontend
         run: |
-          echo "## Frontend Test Coverage Summary" >> $GITHUB_STEP_SUMMARY
+          echo "## 📊 Frontend Test Coverage" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
           if [ -f coverage/coverage-summary.json ]; then
-            echo "\`\`\`json" >> $GITHUB_STEP_SUMMARY
-            cat coverage/coverage-summary.json >> $GITHUB_STEP_SUMMARY
-            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            echo "| Metric | Coverage |" >> $GITHUB_STEP_SUMMARY
+            echo "|--------|----------|" >> $GITHUB_STEP_SUMMARY
+            node -e "const data=require('./coverage/coverage-summary.json'); const t=data.total; console.log(\`| 📝 Lines | \${t.lines.pct}% (\${t.lines.covered}/${t.lines.total}) |\`); console.log(\`| 📋 Statements | \${t.statements.pct}% (\${t.statements.covered}/${t.statements.total}) |\`); console.log(\`| 🔀 Branches | \${t.branches.pct}% (\${t.branches.covered}/${t.branches.total}) |\`); console.log(\`| ⚡ Functions | \${t.functions.pct}% (\${t.functions.covered}/${t.functions.total}) |\`);" >> $GITHUB_STEP_SUMMARY
           else
-            echo "Coverage summary not generated. Check test output above." >> $GITHUB_STEP_SUMMARY
+            echo "❌ Coverage summary not generated." >> $GITHUB_STEP_SUMMARY
           fi
 
   # Backend Testing Job
@@ -99,13 +100,14 @@ jobs:
       - name: Display coverage summary
         working-directory: ./server
         run: |
-          echo "## Backend Test Coverage Summary" >> $GITHUB_STEP_SUMMARY
+          echo "## 📊 Backend Test Coverage" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
           if [ -f coverage/coverage-summary.json ]; then
-            echo "\`\`\`json" >> $GITHUB_STEP_SUMMARY
-            cat coverage/coverage-summary.json >> $GITHUB_STEP_SUMMARY
-            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            echo "| Metric | Coverage |" >> $GITHUB_STEP_SUMMARY
+            echo "|--------|----------|" >> $GITHUB_STEP_SUMMARY
+            node -e "const data=require('./coverage/coverage-summary.json'); const t=data.total; console.log(\`| 📝 Lines | \${t.lines.pct}% (\${t.lines.covered}/${t.lines.total}) |\`); console.log(\`| 📋 Statements | \${t.statements.pct}% (\${t.statements.covered}/${t.statements.total}) |\`); console.log(\`| 🔀 Branches | \${t.branches.pct}% (\${t.branches.covered}/${t.branches.total}) |\`); console.log(\`| ⚡ Functions | \${t.functions.pct}% (\${t.functions.covered}/${t.functions.total}) |\`);" >> $GITHUB_STEP_SUMMARY
           else
-            echo "Coverage summary not generated. Check test output above." >> $GITHUB_STEP_SUMMARY
+            echo "❌ Coverage summary not generated." >> $GITHUB_STEP_SUMMARY
           fi
 
   # Combined Coverage Report Job
@@ -129,24 +131,30 @@ jobs:
       
       - name: Display combined coverage info
         run: |
-          echo "# 📊 Combined Coverage Report" >> $GITHUB_STEP_SUMMARY
+          echo "# 🎯 Combined Test Coverage Report" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## Frontend Coverage" >> $GITHUB_STEP_SUMMARY
+          
+          echo "## 🎨 Frontend Coverage" >> $GITHUB_STEP_SUMMARY
           if [ -f ./coverage/frontend/coverage-summary.json ]; then
-            echo "\`\`\`json" >> $GITHUB_STEP_SUMMARY
-            cat ./coverage/frontend/coverage-summary.json >> $GITHUB_STEP_SUMMARY
-            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            echo "| Metric | Coverage |" >> $GITHUB_STEP_SUMMARY
+            echo "|--------|----------|" >> $GITHUB_STEP_SUMMARY
+            node -e "const data=require('./coverage/frontend/coverage-summary.json'); const t=data.total; console.log(\`| 📝 Lines | \${t.lines.pct}% (\${t.lines.covered}/${t.lines.total}) |\`); console.log(\`| 📋 Statements | \${t.statements.pct}% (\${t.statements.covered}/${t.statements.total}) |\`); console.log(\`| 🔀 Branches | \${t.branches.pct}% (\${t.branches.covered}/${t.branches.total}) |\`); console.log(\`| ⚡ Functions | \${t.functions.pct}% (\${t.functions.covered}/${t.functions.total}) |\`);" >> $GITHUB_STEP_SUMMARY
           else
-            echo "Coverage summary not available" >> $GITHUB_STEP_SUMMARY
+            echo "❌ Coverage data not available" >> $GITHUB_STEP_SUMMARY
           fi
+          
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## Backend Coverage" >> $GITHUB_STEP_SUMMARY
+          echo "## ⚙️ Backend Coverage" >> $GITHUB_STEP_SUMMARY
           if [ -f ./coverage/backend/coverage-summary.json ]; then
-            echo "\`\`\`json" >> $GITHUB_STEP_SUMMARY
-            cat ./coverage/backend/coverage-summary.json >> $GITHUB_STEP_SUMMARY
-            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            echo "| Metric | Coverage |" >> $GITHUB_STEP_SUMMARY
+            echo "|--------|----------|" >> $GITHUB_STEP_SUMMARY
+            node -e "const data=require('./coverage/backend/coverage-summary.json'); const t=data.total; console.log(\`| 📝 Lines | \${t.lines.pct}% (\${t.lines.covered}/${t.lines.total}) |\`); console.log(\`| 📋 Statements | \${t.statements.pct}% (\${t.statements.covered}/${t.statements.total}) |\`); console.log(\`| 🔀 Branches | \${t.branches.pct}% (\${t.branches.covered}/${t.branches.total}) |\`); console.log(\`| ⚡ Functions | \${t.functions.pct}% (\${t.functions.covered}/${t.functions.total}) |\`);" >> $GITHUB_STEP_SUMMARY
           else
-            echo "Coverage summary not available" >> $GITHUB_STEP_SUMMARY
+            echo "❌ Coverage data not available" >> $GITHUB_STEP_SUMMARY
           fi
+          
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "📁 Coverage reports are available as artifacts in the Actions tab." >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📁 **Detailed HTML reports** are available as artifacts in the Actions tab above." >> $GITHUB_STEP_SUMMARY
+          echo "💾 **Download artifacts:** \`frontend-coverage-report\` and \`backend-coverage-report\`" >> $GITHUB_STEP_SUMMARY
