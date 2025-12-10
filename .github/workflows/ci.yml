@@ -42,9 +42,13 @@ jobs:
         working-directory: ./frontend
         run: |
           echo "## Frontend Test Coverage Summary" >> $GITHUB_STEP_SUMMARY
-          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-          cat coverage/coverage-summary.json || echo "Coverage summary not available"
-          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          if [ -f coverage/coverage-summary.json ]; then
+            echo "\`\`\`json" >> $GITHUB_STEP_SUMMARY
+            cat coverage/coverage-summary.json >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "Coverage summary not generated. Check test output above." >> $GITHUB_STEP_SUMMARY
+          fi
 
   # Backend Testing Job
   backend-tests:
@@ -96,9 +100,13 @@ jobs:
         working-directory: ./server
         run: |
           echo "## Backend Test Coverage Summary" >> $GITHUB_STEP_SUMMARY
-          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-          cat coverage/coverage-summary.json || echo "Coverage summary not available"
-          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          if [ -f coverage/coverage-summary.json ]; then
+            echo "\`\`\`json" >> $GITHUB_STEP_SUMMARY
+            cat coverage/coverage-summary.json >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "Coverage summary not generated. Check test output above." >> $GITHUB_STEP_SUMMARY
+          fi
 
   # Combined Coverage Report Job
   coverage-report:

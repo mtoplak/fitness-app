@@ -17,7 +17,7 @@ export default {
   testMatch: ['**/__tests__/**/*.ts', '**/?(*.)+(spec|test).ts'],
   collectCoverage: true,
   coverageDirectory: 'coverage',
-  coverageReporters: ['text', 'lcov', 'json', 'html'],
+  coverageReporters: ['text', 'lcov', 'json', 'json-summary', 'html'],
   coveragePathIgnorePatterns: [
     '/node_modules/',
     '/dist/',
