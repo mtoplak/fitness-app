@@ -46,7 +46,10 @@ jobs:
           if [ -f coverage/coverage-summary.json ]; then
             echo "| Metric | Coverage |" >> $GITHUB_STEP_SUMMARY
             echo "|--------|----------|" >> $GITHUB_STEP_SUMMARY
-            node -e "const data=require('./coverage/coverage-summary.json'); const t=data.total; console.log(\`| 📝 Lines | \${t.lines.pct}% (\${t.lines.covered}/${t.lines.total}) |\`); console.log(\`| 📋 Statements | \${t.statements.pct}% (\${t.statements.covered}/${t.statements.total}) |\`); console.log(\`| 🔀 Branches | \${t.branches.pct}% (\${t.branches.covered}/${t.branches.total}) |\`); console.log(\`| ⚡ Functions | \${t.functions.pct}% (\${t.functions.covered}/${t.functions.total}) |\`);" >> $GITHUB_STEP_SUMMARY
+            node -pe "const d=require('./coverage/coverage-summary.json').total; '| 📝 Lines | '+d.lines.pct+'% ('+d.lines.covered+'/'+d.lines.total+') |'" >> $GITHUB_STEP_SUMMARY
+            node -pe "const d=require('./coverage/coverage-summary.json').total; '| 📋 Statements | '+d.statements.pct+'% ('+d.statements.covered+'/'+d.statements.total+') |'" >> $GITHUB_STEP_SUMMARY
+            node -pe "const d=require('./coverage/coverage-summary.json').total; '| 🔀 Branches | '+d.branches.pct+'% ('+d.branches.covered+'/'+d.branches.total+') |'" >> $GITHUB_STEP_SUMMARY
+            node -pe "const d=require('./coverage/coverage-summary.json').total; '| ⚡ Functions | '+d.functions.pct+'% ('+d.functions.covered+'/'+d.functions.total+') |'" >> $GITHUB_STEP_SUMMARY
           else
             echo "❌ Coverage summary not generated." >> $GITHUB_STEP_SUMMARY
           fi
@@ -105,7 +108,10 @@ jobs:
           if [ -f coverage/coverage-summary.json ]; then
             echo "| Metric | Coverage |" >> $GITHUB_STEP_SUMMARY
             echo "|--------|----------|" >> $GITHUB_STEP_SUMMARY
-            node -e "const data=require('./coverage/coverage-summary.json'); const t=data.total; console.log(\`| 📝 Lines | \${t.lines.pct}% (\${t.lines.covered}/${t.lines.total}) |\`); console.log(\`| 📋 Statements | \${t.statements.pct}% (\${t.statements.covered}/${t.statements.total}) |\`); console.log(\`| 🔀 Branches | \${t.branches.pct}% (\${t.branches.covered}/${t.branches.total}) |\`); console.log(\`| ⚡ Functions | \${t.functions.pct}% (\${t.functions.covered}/${t.functions.total}) |\`);" >> $GITHUB_STEP_SUMMARY
+            node -pe "const d=require('./coverage/coverage-summary.json').total; '| 📝 Lines | '+d.lines.pct+'% ('+d.lines.covered+'/'+d.lines.total+') |'" >> $GITHUB_STEP_SUMMARY
+            node -pe "const d=require('./coverage/coverage-summary.json').total; '| 📋 Statements | '+d.statements.pct+'% ('+d.statements.covered+'/'+d.statements.total+') |'" >> $GITHUB_STEP_SUMMARY
+            node -pe "const d=require('./coverage/coverage-summary.json').total; '| 🔀 Branches | '+d.branches.pct+'% ('+d.branches.covered+'/'+d.branches.total+') |'" >> $GITHUB_STEP_SUMMARY
+            node -pe "const d=require('./coverage/coverage-summary.json').total; '| ⚡ Functions | '+d.functions.pct+'% ('+d.functions.covered+'/'+d.functions.total+') |'" >> $GITHUB_STEP_SUMMARY
           else
             echo "❌ Coverage summary not generated." >> $GITHUB_STEP_SUMMARY
           fi
@@ -138,7 +144,10 @@ jobs:
           if [ -f ./coverage/frontend/coverage-summary.json ]; then
             echo "| Metric | Coverage |" >> $GITHUB_STEP_SUMMARY
             echo "|--------|----------|" >> $GITHUB_STEP_SUMMARY
-            node -e "const data=require('./coverage/frontend/coverage-summary.json'); const t=data.total; console.log(\`| 📝 Lines | \${t.lines.pct}% (\${t.lines.covered}/${t.lines.total}) |\`); console.log(\`| 📋 Statements | \${t.statements.pct}% (\${t.statements.covered}/${t.statements.total}) |\`); console.log(\`| 🔀 Branches | \${t.branches.pct}% (\${t.branches.covered}/${t.branches.total}) |\`); console.log(\`| ⚡ Functions | \${t.functions.pct}% (\${t.functions.covered}/${t.functions.total}) |\`);" >> $GITHUB_STEP_SUMMARY
+            node -pe "const d=require('./coverage/frontend/coverage-summary.json').total; '| 📝 Lines | '+d.lines.pct+'% ('+d.lines.covered+'/'+d.lines.total+') |'" >> $GITHUB_STEP_SUMMARY
+            node -pe "const d=require('./coverage/frontend/coverage-summary.json').total; '| 📋 Statements | '+d.statements.pct+'% ('+d.statements.covered+'/'+d.statements.total+') |'" >> $GITHUB_STEP_SUMMARY
+            node -pe "const d=require('./coverage/frontend/coverage-summary.json').total; '| 🔀 Branches | '+d.branches.pct+'% ('+d.branches.covered+'/'+d.branches.total+') |'" >> $GITHUB_STEP_SUMMARY
+            node -pe "const d=require('./coverage/frontend/coverage-summary.json').total; '| ⚡ Functions | '+d.functions.pct+'% ('+d.functions.covered+'/'+d.functions.total+') |'" >> $GITHUB_STEP_SUMMARY
           else
             echo "❌ Coverage data not available" >> $GITHUB_STEP_SUMMARY
           fi
@@ -148,7 +157,10 @@ jobs:
           if [ -f ./coverage/backend/coverage-summary.json ]; then
             echo "| Metric | Coverage |" >> $GITHUB_STEP_SUMMARY
             echo "|--------|----------|" >> $GITHUB_STEP_SUMMARY
-            node -e "const data=require('./coverage/backend/coverage-summary.json'); const t=data.total; console.log(\`| 📝 Lines | \${t.lines.pct}% (\${t.lines.covered}/${t.lines.total}) |\`); console.log(\`| 📋 Statements | \${t.statements.pct}% (\${t.statements.covered}/${t.statements.total}) |\`); console.log(\`| 🔀 Branches | \${t.branches.pct}% (\${t.branches.covered}/${t.branches.total}) |\`); console.log(\`| ⚡ Functions | \${t.functions.pct}% (\${t.functions.covered}/${t.functions.total}) |\`);" >> $GITHUB_STEP_SUMMARY
+            node -pe "const d=require('./coverage/backend/coverage-summary.json').total; '| 📝 Lines | '+d.lines.pct+'% ('+d.lines.covered+'/'+d.lines.total+') |'" >> $GITHUB_STEP_SUMMARY
+            node -pe "const d=require('./coverage/backend/coverage-summary.json').total; '| 📋 Statements | '+d.statements.pct+'% ('+d.statements.covered+'/'+d.statements.total+') |'" >> $GITHUB_STEP_SUMMARY
+            node -pe "const d=require('./coverage/backend/coverage-summary.json').total; '| 🔀 Branches | '+d.branches.pct+'% ('+d.branches.covered+'/'+d.branches.total+') |'" >> $GITHUB_STEP_SUMMARY
+            node -pe "const d=require('./coverage/backend/coverage-summary.json').total; '| ⚡ Functions | '+d.functions.pct+'% ('+d.functions.covered+'/'+d.functions.total+') |'" >> $GITHUB_STEP_SUMMARY
           else
             echo "❌ Coverage data not available" >> $GITHUB_STEP_SUMMARY
           fi
