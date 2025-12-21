@@ -427,37 +427,3 @@ jobs:
           echo "## 🚀 Deployment to Render" >> $GITHUB_STEP_SUMMARY
           echo "✅ Backend deployment triggered" >> $GITHUB_STEP_SUMMARY
           echo "🔗 Check status at: https://dashboard.render.com/" >> $GITHUB_STEP_SUMMARY
-
-  deploy-vercel:
-    name: Deploy Frontend to Vercel
-    needs: build-frontend
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: frontend-build
-          path: frontend/dist
-      
-      - name: Install Vercel CLI
-        run: npm install -g vercel
-      
-      - name: Pull Vercel Environment Information
-        working-directory: ./frontend
-        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
-      
-      - name: Deploy to Vercel
-        working-directory: ./frontend
-        run: vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }}
-        id: vercel-deploy
-      
-      - name: Display deployment info
-        run: |
-          echo "## 🌐 Frontend Deployed to Vercel" >> $GITHUB_STEP_SUMMARY
-          echo "✅ Deployment successful" >> $GITHUB_STEP_SUMMARY
-          echo "🔗 Check your Vercel dashboard for the live URL" >> $GITHUB_STEP_SUMMARY
