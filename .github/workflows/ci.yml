@@ -199,19 +199,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      
-      - name: SonarCloud Analysis Summary
-        run: |
-          echo "## 🔍 SonarCloud Analysis" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "✅ Code analysis completed successfully." >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "🔗 [View detailed results on SonarCloud](https://sonarcloud.io/project/overview?id=${{ secrets.SONAR_PROJECT_KEY }})" >> $GITHUB_STEP_SUMMARY
-
-      - name: Wait for SonarCloud processing
-        run: |
-          echo "⏳ Waiting for SonarCloud to process analysis..."
-          sleep 10
 
       - name: Check Quality Gate Status
         uses: sonarsource/sonarqube-quality-gate-action@master
@@ -223,17 +210,28 @@ jobs:
       - name: Quality Gate Success
         if: success()
         run: |
-          echo "## ✅ Quality Gate - SUCCESS" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "All quality standards passed." >> $GITHUB_STEP_SUMMARY
-          echo "Deployment may proceed." >> $GITHUB_STEP_SUMMARY
+          # print to job log
+          echo "## ✅ Quality Gate - SUCCESS"
+          echo ""
+          echo "All quality standards passed."
+          echo "Deployment may proceed."
+
+          if [ -n "$GITHUB_STEP_SUMMARY" ]; then
+            echo "## ✅ Quality Gate - SUCCESS" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "All quality standards passed." >> $GITHUB_STEP_SUMMARY
+            echo "Deployment may proceed." >> $GITHUB_STEP_SUMMARY
+          fi
       
       - name: Quality Gate Failed
         if: failure()
         run: |
-          echo "## ❌ Quality Gate - FAILED" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "⚠️ Quality gates were not met!" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Deployment is blocked. Please fix issues in SonarCloud." >> $GITHUB_STEP_SUMMARY
+
+          if [ -n "$GITHUB_STEP_SUMMARY" ]; then
+            echo "## ❌ Quality Gate - FAILED" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "⚠️ Quality gates were not met!" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Deployment is blocked. Please fix issues in SonarCloud." >> $GITHUB_STEP_SUMMARY
+          fi
           exit 1
