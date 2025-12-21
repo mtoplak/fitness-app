@@ -324,11 +324,48 @@ jobs:
           echo "✅ Build artifacts saved" >> $GITHUB_STEP_SUMMARY
           echo "📦 Artifact name: \`backend-build\`" >> $GITHUB_STEP_SUMMARY
 
-  docker-build-push:
-    name: Build & Push Docker Images
-    needs: [build-frontend, build-backend]
+  deploy-github-pages:
+    name: Deploy to GitHub Pages
+    needs: [frontend-tests, backend-tests]
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/production')
+    
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+      
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+      
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+      
+      - name: Display deployment info
+        run: |
+          echo "## 📄 GitHub Pages Deployed" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Static site deployed successfully" >> $GITHUB_STEP_SUMMARY
+          echo "🔗 URL: ${{ steps.deployment.outputs.page_url }}" >> $GITHUB_STEP_SUMMARY
+
+  # Development Environment - Docker Build & Push
+  docker-build-push-dev:
+    name: Build & Push Docker Images (Development)
+    needs: [build-frontend, build-backend]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    environment:
+      name: Development
+      url: https://hub.docker.com/
     
     steps:
       - name: Checkout code
@@ -343,73 +380,127 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
       
-      - name: Extract metadata for Frontend
-        id: meta-frontend
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ secrets.DOCKER_USERNAME }}/fitness-app-frontend
-          tags: |
-            type=ref,event=branch
-            type=sha,prefix={{branch}}-
-            type=raw,value=latest,enable={{is_default_branch}}
-      
-      - name: Build and push Frontend image
+      - name: Build and push Frontend image (dev)
         uses: docker/build-push-action@v5
         with:
           context: ./frontend
           file: ./frontend/Dockerfile
           push: true
-          tags: ${{ steps.meta-frontend.outputs.tags }}
-          labels: ${{ steps.meta-frontend.outputs.labels }}
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/fitness-app-frontend:dev
+            ${{ secrets.DOCKER_USERNAME }}/fitness-app-frontend:dev-${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
       
-      - name: Extract metadata for Backend
-        id: meta-backend
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ secrets.DOCKER_USERNAME }}/fitness-app-backend
-          tags: |
-            type=ref,event=branch
-            type=sha,prefix={{branch}}-
-            type=raw,value=latest,enable={{is_default_branch}}
-      
-      - name: Build and push Backend image
+      - name: Build and push Backend image (dev)
         uses: docker/build-push-action@v5
         with:
           context: ./server
           file: ./server/Dockerfile
           push: true
-          tags: ${{ steps.meta-backend.outputs.tags }}
-          labels: ${{ steps.meta-backend.outputs.labels }}
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/fitness-app-backend:dev
+            ${{ secrets.DOCKER_USERNAME }}/fitness-app-backend:dev-${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
       
       - name: Display Docker info
         run: |
-          echo "## 🐳 Docker Images Published" >> $GITHUB_STEP_SUMMARY
+          echo "## 🐳 Docker Images Published (Development)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Frontend Image" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-          echo "${{ steps.meta-frontend.outputs.tags }}" >> $GITHUB_STEP_SUMMARY
+          echo "${{ secrets.DOCKER_USERNAME }}/fitness-app-frontend:dev" >> $GITHUB_STEP_SUMMARY
+          echo "${{ secrets.DOCKER_USERNAME }}/fitness-app-frontend:dev-${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Backend Image" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-          echo "${{ steps.meta-backend.outputs.tags }}" >> $GITHUB_STEP_SUMMARY
+          echo "${{ secrets.DOCKER_USERNAME }}/fitness-app-backend:dev" >> $GITHUB_STEP_SUMMARY
+          echo "${{ secrets.DOCKER_USERNAME }}/fitness-app-backend:dev-${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
 
-  deploy-render:
-    name: Deploy to Render
-    needs: docker-build-push
+  # Production Environment - Docker Build & Push
+  docker-build-push-prod:
+    name: Build & Push Docker Images (Production)
+    needs: [build-frontend, build-backend]
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/production'
+    environment:
+      name: Production
+      url: https://hub.docker.com/
     
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
       
-      - name: Deploy Backend to Render
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      
+      - name: Build and push Frontend image (prod)
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/fitness-app-frontend:prod
+            ${{ secrets.DOCKER_USERNAME }}/fitness-app-frontend:prod-${{ github.sha }}
+            ${{ secrets.DOCKER_USERNAME }}/fitness-app-frontend:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      
+      - name: Build and push Backend image (prod)
+        uses: docker/build-push-action@v5
+        with:
+          context: ./server
+          file: ./server/Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/fitness-app-backend:prod
+            ${{ secrets.DOCKER_USERNAME }}/fitness-app-backend:prod-${{ github.sha }}
+            ${{ secrets.DOCKER_USERNAME }}/fitness-app-backend:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      
+      - name: Display Docker info
+        run: |
+          echo "## 🐳 Docker Images Published (Production)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Frontend Image" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "${{ secrets.DOCKER_USERNAME }}/fitness-app-frontend:prod" >> $GITHUB_STEP_SUMMARY
+          echo "${{ secrets.DOCKER_USERNAME }}/fitness-app-frontend:prod-${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "${{ secrets.DOCKER_USERNAME }}/fitness-app-frontend:latest" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Backend Image" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "${{ secrets.DOCKER_USERNAME }}/fitness-app-backend:prod" >> $GITHUB_STEP_SUMMARY
+          echo "${{ secrets.DOCKER_USERNAME }}/fitness-app-backend:prod-${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "${{ secrets.DOCKER_USERNAME }}/fitness-app-backend:latest" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+
+  deploy-render-dev:
+    name: Deploy Backend to Render (Development)
+    needs: docker-build-push-dev
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    environment:
+      name: Development
+      url: https://dashboard.render.com/
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Deploy Backend to Render (Development)
         env:
           RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
           RENDER_SERVICE_ID: ${{ secrets.RENDER_BACKEND_SERVICE_ID }}
@@ -424,6 +515,101 @@ jobs:
       
       - name: Display deployment info
         run: |
-          echo "## 🚀 Deployment to Render" >> $GITHUB_STEP_SUMMARY
+          echo "## 🚀 Deployment to Render (Development)" >> $GITHUB_STEP_SUMMARY
           echo "✅ Backend deployment triggered" >> $GITHUB_STEP_SUMMARY
           echo "🔗 Check status at: https://dashboard.render.com/" >> $GITHUB_STEP_SUMMARY
+
+  deploy-render-prod:
+    name: Deploy Backend to Render (Production)
+    needs: docker-build-push-prod
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/production'
+    environment:
+      name: Production
+      url: https://dashboard.render.com/
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Deploy Backend to Render (Production)
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+          RENDER_SERVICE_ID_PROD: ${{ secrets.RENDER_BACKEND_SERVICE_ID_PROD }}
+        run: |
+          curl -X POST "https://api.render.com/v1/services/${RENDER_SERVICE_ID_PROD}/deploys" \
+            -H "Authorization: Bearer ${RENDER_API_KEY}" \
+            -H "Content-Type: application/json" \
+            -d '{"clearCache": false}'
+      
+      - name: Display deployment info
+        run: |
+          echo "## 🚀 Deployment to Render (Production)" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Backend deployment triggered" >> $GITHUB_STEP_SUMMARY
+          echo "🔗 Check status at: https://dashboard.render.com/" >> $GITHUB_STEP_SUMMARY
+
+  deploy-vercel-dev:
+    name: Deploy Frontend to Vercel (Development)
+    needs: build-frontend
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    environment:
+      name: Development
+      url: https://vercel.com/dashboard
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-build
+          path: frontend/dist
+      
+      - name: Install Vercel CLI
+        run: npm install -g vercel
+      
+      - name: Deploy to Vercel (Development)
+        working-directory: ./frontend
+        run: vercel deploy --token=${{ secrets.VERCEL_TOKEN }}
+        id: vercel-deploy
+      
+      - name: Display deployment info
+        run: |
+          echo "## 🌐 Frontend Deployed to Vercel (Development)" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Deployment successful" >> $GITHUB_STEP_SUMMARY
+          echo "🔗 Check your Vercel dashboard for the live URL" >> $GITHUB_STEP_SUMMARY
+
+  deploy-vercel-prod:
+    name: Deploy Frontend to Vercel (Production)
+    needs: build-frontend
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/production'
+    environment:
+      name: Production
+      url: https://vercel.com/dashboard
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-build
+          path: frontend/dist
+      
+      - name: Install Vercel CLI
+        run: npm install -g vercel
+      
+      - name: Deploy to Vercel (Production)
+        working-directory: ./frontend
+        run: vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }}
+        id: vercel-deploy
+      
+      - name: Display deployment info
+        run: |
+          echo "## 🌐 Frontend Deployed to Vercel (Production)" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Deployment successful" >> $GITHUB_STEP_SUMMARY
+          echo "🔗 Check your Vercel dashboard for the live URL" >> $GITHUB_STEP_SUMMARY

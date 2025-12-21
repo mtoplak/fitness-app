@@ -14,14 +14,45 @@
 - `frontend`: React (Vite) + TypeScript frontend
 - `.github/workflows`: CI/CD pipeline configuration
 - `docker-compose.yml`: Local Docker development setup
+- `index.html`: GitHub Pages static site
 
 ## 📦 CI/CD Pipeline
 
-This project includes a complete CI/CD pipeline with:
+This project includes a CI/CD pipeline with:
 - ✅ Automated testing with coverage reports
-- ✅ Build phase with dependency caching
+- ✅ Build phase with dependency caching and artifacts
+- ✅ SonarCloud code quality analysis
 - ✅ Docker image building and pushing to Docker Hub
+- ✅ GitHub Pages deployment
+- ✅ Environment-based deployments (Development & Production)
+- ✅ Manual approval for production deployments
 - ✅ Automatic deployment to Render (backend) and Vercel (frontend)
+
+### 🌍 Environments
+
+The pipeline supports two environments:
+
+#### Development (main branch)
+- Automatic deployment after tests pass
+- Docker images tagged with `dev`
+- No manual approval required
+
+#### Production (production branch)  
+- Requires manual approval from designated reviewers
+- Docker images tagged with `prod` and `latest`
+- Quality Gate checks must pass
+
+### 🚀 Quick Start
+
+```bash
+# Deploy to Development
+git push origin main
+
+# Deploy to Production (requires approval)
+git checkout production
+git merge main
+git push origin production
+```
 
 
 ### Backend (server)
