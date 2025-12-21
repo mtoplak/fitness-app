@@ -208,23 +208,14 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "🔗 [View detailed results on SonarCloud](https://sonarcloud.io/project/overview?id=${{ secrets.SONAR_PROJECT_KEY }})" >> $GITHUB_STEP_SUMMARY
 
-  quality-gate:
-    name: Quality Gate Check
-    needs: sonarcloud
-    runs-on: ubuntu-latest
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
-      - name: Wait for Quality Gate
+      - name: Wait for SonarCloud processing
         run: |
-          echo "⏳ Waiting for Quality Gate result..."
+          echo "⏳ Waiting for SonarCloud to process analysis..."
           sleep 10
-      
+
       - name: Check Quality Gate Status
         uses: sonarsource/sonarqube-quality-gate-action@master
-        timeout-minutes: 5
+        timeout-minutes: 10
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         continue-on-error: false
