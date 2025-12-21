@@ -1,0 +1,35 @@
+# Render Blueprint - Fitness App
+# https://render.com/docs/blueprint-spec
+
+services:
+  # Backend API Service
+  - type: web
+    name: fitness-app-backend
+    runtime: docker
+    dockerfilePath: ./server/Dockerfile
+    region: frankfurt
+    plan: free
+    branch: main
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      - key: JWT_SECRET
+        generateValue: true
+        sync: false
+      - key: MONGODB_URI
+        fromDatabase:
+          name: fitness-app-mongodb
+          property: connectionString
+      - key: CLIENT_ORIGIN
+        value: https://fitness-app-frontend.vercel.app
+
+databases:
+  # MongoDB using external service (MongoDB Atlas recommended)
+  # Uncomment if using Render's experimental MongoDB
+  # - name: fitness-app-mongodb
+  #   databaseName: fitness-app
+  #   region: frankfurt
+  #   plan: free
