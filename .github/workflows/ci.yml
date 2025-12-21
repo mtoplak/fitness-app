@@ -170,3 +170,80 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "📁 **Detailed HTML reports** are available as artifacts in the Actions tab above." >> $GITHUB_STEP_SUMMARY
           echo "💾 **Download artifacts:** \`frontend-coverage-report\` and \`backend-coverage-report\`" >> $GITHUB_STEP_SUMMARY
+
+  sonarcloud:
+    name: SonarCloud Analysis
+    needs: [frontend-tests, backend-tests]
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Download frontend coverage
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-coverage-report
+          path: ./frontend/coverage
+      
+      - name: Download backend coverage
+        uses: actions/download-artifact@v4
+        with:
+          name: backend-coverage-report
+          path: ./server/coverage
+      
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      
+      - name: SonarCloud Analysis Summary
+        run: |
+          echo "## 🔍 SonarCloud Analysis" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Code analysis completed successfully." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🔗 [View detailed results on SonarCloud](https://sonarcloud.io/project/overview?id=${{ secrets.SONAR_PROJECT_KEY }})" >> $GITHUB_STEP_SUMMARY
+
+  quality-gate:
+    name: Quality Gate Check
+    needs: sonarcloud
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/production' || github.ref == 'refs/heads/pre-production'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Wait for Quality Gate
+        run: |
+          echo "⏳ Waiting for Quality Gate result..."
+          sleep 10
+      
+      - name: Check Quality Gate Status
+        uses: sonarsource/sonarqube-quality-gate-action@master
+        timeout-minutes: 5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        continue-on-error: false
+      
+      - name: Quality Gate Success
+        if: success()
+        run: |
+          echo "## ✅ Quality Gate - SUCCESS" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "All quality standards passed." >> $GITHUB_STEP_SUMMARY
+          echo "Deployment may proceed." >> $GITHUB_STEP_SUMMARY
+      
+      - name: Quality Gate Failed
+        if: failure()
+        run: |
+          echo "## ❌ Quality Gate - FAILED" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "⚠️ Quality gates were not met!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Deployment is blocked. Please fix issues in SonarCloud." >> $GITHUB_STEP_SUMMARY
+          exit 1
