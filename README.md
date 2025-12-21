@@ -1,12 +1,28 @@
 ## Fitness App – Development Setup
 
 ### Prerequisites
-- Node.js 18+ and npm
-- MongoDB running locally or a MongoDB Atlas connection string
+- Node.js 20+ and npm
+- Docker and Docker Compose
+- MongoDB running locally or MongoDB Atlas connection string
+- GitHub account
+- Docker Hub account
+- Render account (for backend)
+- Vercel account (for frontend)
 
 ### Repository Structure
 - `server`: Express + MongoDB (Mongoose) + JWT auth
-- `frontend`: React (Vite) frontend
+- `frontend`: React (Vite) + TypeScript frontend
+- `.github/workflows`: CI/CD pipeline configuration
+- `docker-compose.yml`: Local Docker development setup
+
+## 📦 CI/CD Pipeline
+
+This project includes a complete CI/CD pipeline with:
+- ✅ Automated testing with coverage reports
+- ✅ Build phase with dependency caching
+- ✅ Docker image building and pushing to Docker Hub
+- ✅ Automatic deployment to Render (backend) and Vercel (frontend)
+
 
 ### Backend (server)
 1) Create `.env` in `server` with:
@@ -58,3 +74,86 @@ Frontend will start on `http://localhost:8080`.
 - Ensure MongoDB is running and `MONGODB_URI` is correct
 - CORS: `CLIENT_ORIGIN` must match the frontend origin
 
+## 🐳 Docker Deployment
+
+### Local Development with Docker
+
+```bash
+# Build and start all services
+docker-compose up --build
+
+# Stop services
+docker-compose down
+
+# View logs
+docker-compose logs -f
+```
+
+Access:
+- Frontend: http://localhost:80
+- Backend: http://localhost:3000
+- MongoDB: mongodb://localhost:27017
+
+### Production Docker Images
+
+Images are automatically built and pushed to Docker Hub via GitHub Actions:
+- `yourusername/fitness-app-frontend:latest`
+- `yourusername/fitness-app-backend:latest`
+
+## 🧪 Testing
+
+### Run Tests Locally
+
+```bash
+# Frontend tests
+cd frontend
+npm install
+npm run test
+npm run test:coverage
+
+# Backend tests  
+cd server
+npm install
+npm test
+```
+
+## 📊 CI/CD Pipeline Stages
+
+1. **Testing Phase**
+   - Frontend unit tests with coverage
+   - Backend unit tests with coverage
+   - Static analysis (SonarCloud) and quality gate
+   - Coverage reports uploaded as artifacts
+
+2. **Build Phase**
+   - Frontend build with dependency caching
+   - Backend build with dependency caching
+   - Build artifacts stored for deployment
+
+3. **Docker Phase** (main/production branches only)
+   - Build Docker images for frontend and backend
+   - Push images to Docker Hub with proper tags
+   - Layer caching for faster builds
+
+4. **Deployment Phase** (main branch only)
+   - Backend deployed to Render
+   - Frontend deployed to Vercel
+   - Automatic health checks
+
+## 🔧 Environment Variables
+
+See [.env.template](./.env.template) for required environment variables.
+
+### Backend (.env in server/)
+```bash
+NODE_ENV=development
+PORT=4000
+MONGODB_URI=mongodb://localhost:27017/fitness_app
+JWT_SECRET=your-secret-key-at-least-32-chars
+CLIENT_ORIGIN=http://localhost:8080
+```
+
+### Frontend (.env in frontend/)
+```bash
+VITE_API_BASE_URL=http://localhost:4000
+```
