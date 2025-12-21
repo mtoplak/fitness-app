@@ -212,7 +212,6 @@ jobs:
     name: Quality Gate Check
     needs: sonarcloud
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/production' || github.ref == 'refs/heads/pre-production'
     
     steps:
       - name: Checkout code
