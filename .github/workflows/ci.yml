@@ -572,7 +572,7 @@ jobs:
       
       - name: Deploy to Vercel (Development)
         working-directory: ./frontend
-        run: vercel deploy --token=${{ secrets.VERCEL_TOKEN }}
+        run: vercel deploy --yes --token=${{ secrets.VERCEL_TOKEN }}
         id: vercel-deploy
       
       - name: Display deployment info
@@ -605,7 +605,7 @@ jobs:
       
       - name: Deploy to Vercel (Production)
         working-directory: ./frontend
-        run: vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }}
+        run: vercel deploy --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
         id: vercel-deploy
       
       - name: Display deployment info
