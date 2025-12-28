@@ -4,7 +4,6 @@
 - Node.js 20+ and npm
 - Docker and Docker Compose
 - MongoDB running locally or MongoDB Atlas connection string
-- GitHub account
 - Docker Hub account
 - Render account (for backend)
 - Vercel account (for frontend)
