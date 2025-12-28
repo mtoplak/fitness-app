@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="sl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fitness App - CI/CD Project</title>
+        <style>
+            html {
+                box-sizing: border-box;
+            }
+            *, *:before, *:after {
+                box-sizing: inherit;
+            }
+            body {
+                font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+                background: #f6f7fb;
+                min-height: 100vh;
+                margin: 0;
+                padding: 0;
+                display: flex;
+                align-items: flex-start;
+                justify-content: center;
+            }
+            .container {
+                background: #fff;
+                border-radius: 18px;
+                padding: 48px 32px 32px 32px;
+                max-width: 700px;
+                width: 100%;
+                margin: 48px 0 32px 0;
+                box-shadow: 0 2px 16px rgba(60,60,90,0.07);
+            }
+            h1 {
+                color: #2d2e38;
+                font-size: 2.4em;
+                margin-bottom: 8px;
+                text-align: left;
+                font-weight: 800;
+                letter-spacing: -1px;
+            }
+            .subtitle {
+                text-align: left;
+                color: #6a6a7a;
+                font-size: 1.1em;
+                margin-bottom: 32px;
+                font-weight: 500;
+            }
+            .section {
+                margin: 32px 0 0 0;
+            }
+            .section h2 {
+                color: #3b3b4f;
+                font-size: 1.25em;
+                margin-bottom: 10px;
+                font-weight: 700;
+                border: none;
+                padding-bottom: 0;
+            }
+            .team-members {
+                display: flex;
+                gap: 24px;
+                margin-top: 12px;
+                flex-wrap: wrap;
+            }
+            .member {
+                background: #f3f4f8;
+                color: #2d2e38;
+                padding: 16px 20px;
+                border-radius: 8px;
+                text-align: left;
+                font-weight: 600;
+                font-size: 1em;
+                min-width: 140px;
+                box-shadow: none;
+                border: 1px solid #e3e4ea;
+            }
+            .description {
+                line-height: 1.7;
+                color: #444;
+                font-size: 1.08em;
+                text-align: left;
+                margin-bottom: 0;
+            }
+            .features {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 18px;
+                margin-top: 12px;
+            }
+            .feature {
+                background: #f8f9fb;
+                padding: 16px 18px;
+                border-radius: 8px;
+                border-left: 3px solid #667eea;
+                min-width: 180px;
+                flex: 1 1 180px;
+            }
+            .feature h3 {
+                color: #667eea;
+                margin-bottom: 6px;
+                font-size: 1.08em;
+                font-weight: 700;
+            }
+            .feature p {
+                color: #555;
+                line-height: 1.5;
+                font-size: 0.98em;
+            }
+            .badges {
+                display: flex;
+                gap: 8px;
+                flex-wrap: wrap;
+                justify-content: flex-start;
+                margin-top: 18px;
+            }
+            .badge {
+                background: #e3e4ea;
+                color: #3b3b4f;
+                padding: 6px 14px;
+                border-radius: 14px;
+                font-size: 0.92em;
+                font-weight: 500;
+                letter-spacing: 0.01em;
+            }
+            footer {
+                text-align: left;
+                margin-top: 36px;
+                padding-top: 18px;
+                border-top: 1px solid #ececf0;
+                color: #aaa;
+                font-size: 0.98em;
+            }
+        </style>
+</head>
+<body>
+    <div class="container">
+                <h1>🏋️ Fitness App</h1>
+                <p class="subtitle">RIRS Projekt</p>
+
+                <div class="section">
+                    <h2>Opis projekta</h2>
+                    <p class="description">
+                        Fitness App je spletna aplikacija za upravljanje fitnes centra, ki omogoča rezervacije, vodenje vadb in upravljanje članstev. Projekt prikazuje sodobne DevOps prakse z avtomatizirano CI/CD, Docker kontejnerizacijo in večstopenjskimi okolji.
+                    </p>
+                </div>
+
+                <div class="section">
+                    <h2>Funkcionalnosti</h2>
+                    <div class="features">
+                        <div class="feature">
+                            <h3>Avtentikacija</h3>
+                            <p>Prijava in registracija uporabnikov z JWT žetoni.</p>
+                        </div>
+                        <div class="feature">
+                            <h3>Rezervacije</h3>
+                            <p>Rezervacijski sistem za vadbe in trenerje.</p>
+                        </div>
+                        <div class="feature">
+                            <h3>Vadbe</h3>
+                            <p>Skupinske vadbe in osebni treningi.</p>
+                        </div>
+                        <div class="feature">
+                            <h3>Dashboard</h3>
+                            <p>Statistika in analitika uporabe.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2>Tehnologije</h2>
+                    <div class="badges">
+                        <span class="badge">React</span>
+                        <span class="badge">TypeScript</span>
+                        <span class="badge">Node.js</span>
+                        <span class="badge">Express</span>
+                        <span class="badge">MongoDB</span>
+                        <span class="badge">Docker</span>
+                        <span class="badge">GitHub Actions</span>
+                        <span class="badge">Render</span>
+                        <span class="badge">Vercel</span>
+                    </div>
+                </div>
+
+                <footer>
+                    <p>Projekt | December 2025</p>
+                    <p>Avtomatska namestitev prek GitHub Actions na GitHub Pages</p>
+                </footer>
+    </div>
+</body>
+</html>
