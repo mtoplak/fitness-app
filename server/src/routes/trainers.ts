@@ -1,4 +1,5 @@
 import { Router } from "express";
+import crypto from "crypto";
 import { User } from "../models/User.js";
 import { TrainerProfile } from "../models/TrainerProfile.js";
 import { Booking } from "../models/Booking.js";

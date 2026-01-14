@@ -9,6 +9,7 @@ export const env = {
   clientOrigin: process.env.CLIENT_ORIGIN || "http://localhost:8080",
   emailUser: process.env.EMAIL_USER || "",
   emailPass: process.env.EMAIL_PASS || "",
-  emailTestRecipient: process.env.EMAIL_TEST_RECIPIENT || ""
+  emailTestRecipient: process.env.EMAIL_TEST_RECIPIENT || "",
+  nodeEnv: process.env.NODE_ENV || "development"
 };
 

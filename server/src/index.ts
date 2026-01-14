@@ -1,6 +1,8 @@
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import rateLimit from "express-rate-limit";
+import { doubleCsrf } from "csrf-csrf";
 import { env } from "./config/env.js";
 import { connectToDatabase } from "./db.js";
 import authRoutes from "./routes/auth.js";
@@ -21,6 +23,31 @@ async function bootstrap() {
   app.use(cors({ origin: env.clientOrigin, credentials: true }));
   app.use(express.json());
   app.use(cookieParser());
+
+  // Rate limiting
+  const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // limit each IP to 100 requests per windowMs
+    message: "Too many requests from this IP, please try again later."
+  });
+  app.use(limiter);
+
+  // CSRF Protection (skip in test environment)
+  if (env.nodeEnv !== "test") {
+    const { doubleCsrfProtection } = doubleCsrf({
+      getSecret: () => env.jwtSecret,
+      getSessionIdentifier: (req) => req.headers['user-agent'] || 'unknown',
+      cookieName: "x-csrf-token",
+      cookieOptions: {
+        httpOnly: true,
+        sameSite: "strict",
+        secure: env.nodeEnv === "production"
+      },
+      size: 64,
+      ignoredMethods: ["GET", "HEAD", "OPTIONS"]
+    });
+    app.use(doubleCsrfProtection);
+  }
 
   app.get("/", (_req, res) => res.send("Hello from Fitness App API"));
   app.get("/health", (_req, res) => res.json({ ok: true }));
