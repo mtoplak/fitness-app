@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import { encode } from "he";
 import { env } from "../config/env.js";
 
 const transporter = nodemailer.createTransport({
@@ -30,10 +31,10 @@ export async function sendEmail(options: EmailOptions): Promise<void> {
     const mailOptions = {
       from: `WiiFit <${env.emailUser}>`,
       to: actualRecipient,
-      subject: options.subject,
+      subject: encode(options.subject),
       text: options.text + `\n\n---\n(Original recipient would be: ${options.to})`,
       html: options.html 
-        ? options.html + `<hr><p style="color: #888; font-size: 12px;">(Original recipient would be: ${options.to})</p>`
+        ? options.html + `<hr><p style="color: #888; font-size: 12px;">(Original recipient would be: ${encode(options.to)})</p>`
         : undefined,
     };
 

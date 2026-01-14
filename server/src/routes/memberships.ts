@@ -1,4 +1,5 @@
 import { Router } from "express";
+import mongoose from "mongoose";
 import { authenticateJwt, AuthRequest } from "../middleware/auth.js";
 import { Membership, MembershipPackage } from "../models/Membership.js";
 import { Payment } from "../models/Payment.js";
@@ -149,6 +150,11 @@ router.post("/subscribe", authenticateJwt, async (req: AuthRequest, res) => {
       return res.status(400).json({ message: "Paket je obvezen" });
     }
 
+    // Validate MongoDB ObjectId
+    if (!mongoose.Types.ObjectId.isValid(packageId)) {
+      return res.status(400).json({ message: "Neveljaven ID paketa" });
+    }
+
     const pkg = await MembershipPackage.findById(packageId);
     if (!pkg) {
       return res.status(404).json({ message: "Paket ni najden" });
@@ -215,7 +221,10 @@ router.post("/change-package", authenticateJwt, async (req: AuthRequest, res) =>
     if (!packageId) {
       return res.status(400).json({ message: "Paket je obvezen" });
     }
-
+    // Validate MongoDB ObjectId
+    if (!mongoose.Types.ObjectId.isValid(packageId)) {
+      return res.status(400).json({ message: "Neveljaven ID paketa" });
+    }
     // Preveri, če paket obstaja
     const pkg = await MembershipPackage.findById(packageId);
     if (!pkg) {
